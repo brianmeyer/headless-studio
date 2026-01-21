@@ -55,10 +55,11 @@ class XGrokScout:
     Scout service for discovering product opportunities on X/Twitter using Grok.
 
     Uses xAI's Responses API with the x_search tool for native X search capabilities.
-    Model: grok-3-fast (optimized for agentic search applications)
+    Model: grok-4-1-fast (specifically trained for agentic search applications)
     """
 
     XAI_API_BASE = "https://api.x.ai/v1"
+    MODEL = "grok-4-1-fast"  # Recommended model for search tools
 
     # Search query templates for finding product opportunities
     SEARCH_TEMPLATES = [
@@ -232,21 +233,20 @@ Focus on finding genuine product opportunities. Only include posts that show rea
         try:
             async with httpx.AsyncClient(timeout=90.0) as client:
                 # Use the Responses API with x_search tool
+                # See: https://docs.x.ai/docs/guides/tools/search-tools
                 response = await client.post(
                     f"{self.XAI_API_BASE}/responses",
                     headers=self._get_headers(),
                     json={
-                        "model": "grok-3-fast",
+                        "model": self.MODEL,
                         "input": [
                             {"role": "user", "content": prompt}
                         ],
                         "tools": [
                             {
                                 "type": "x_search",
-                                "x_search": {
-                                    "from_date": from_date,
-                                    "to_date": to_date,
-                                }
+                                "from_date": from_date,
+                                "to_date": to_date,
                             }
                         ],
                         "include": ["inline_citations"],
@@ -316,7 +316,7 @@ Return a JSON response with tweets array containing:
                     f"{self.XAI_API_BASE}/chat/completions",
                     headers=self._get_headers(),
                     json={
-                        "model": "grok-3-fast",
+                        "model": self.MODEL,
                         "messages": [
                             {
                                 "role": "system",
@@ -506,7 +506,7 @@ Return as JSON:
                     f"{self.XAI_API_BASE}/chat/completions",
                     headers=self._get_headers(),
                     json={
-                        "model": "grok-3-fast",
+                        "model": self.MODEL,
                         "messages": [
                             {
                                 "role": "system",
