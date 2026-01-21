@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.routers import discovery, landing_pages
 
 # Configure logging
 settings = get_settings()
@@ -117,11 +118,9 @@ async def get_config():
 # =============================================================================
 
 # Phase 0.2: Discovery (X/Grok primary, Reddit supplementary)
-from app.routers import discovery
 app.include_router(discovery.router, prefix="/api/discovery", tags=["Discovery"])
 
 # Phase 0.5: Landing Pages (served from FastAPI, not Supabase Edge Functions)
-from app.routers import landing_pages
 app.include_router(landing_pages.router, tags=["Landing Pages"])
 
 # Phase 0.4: Scoring
