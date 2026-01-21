@@ -1,7 +1,8 @@
 """
 Discovery Router - API endpoints for opportunity discovery.
 
-Handles Reddit scouting, trend analysis, and opportunity surfacing.
+Handles X/Grok scouting (primary), Reddit scouting, trend analysis,
+and opportunity surfacing.
 """
 
 import logging
@@ -9,11 +10,13 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from app.config import get_settings
 from app.models.opportunity import OpportunityCreate
 from app.models.signals import RedditSignal
 from app.services.reddit_scout import RedditScout, DEFAULT_SUBREDDITS
+from app.services.x_scout import XGrokScout, XSignal
 from app.services.scorer import OpportunityScorer
 from app.services.landing_page import LandingPageGenerator
 from app.services.sample_generator import SampleGenerator
@@ -21,6 +24,113 @@ from app.utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+# =============================================================================
+# X/Grok Discovery Endpoints (Primary)
+# =============================================================================
+
+
+class XSearchRequest(BaseModel):
+    """Request body for X search."""
+    topics: list[str]
+    search_queries: list[str] | None = None
+    time_filter: str = "week"
+    limit: int = 50
+
+
+@router.post("/x")
+async def search_x(request: XSearchRequest) -> dict[str, Any]:
+    """
+    Search X/Twitter for product opportunities using Grok.
+
+    This is the PRIMARY discovery method. Grok has native X search capability.
+
+    Args:
+        topics: Topics to search for (e.g., ["chatgpt prompts", "AI tools"])
+        search_queries: Optional custom queries (overrides auto-generated)
+        time_filter: Time range - "day", "week", "month"
+        limit: Maximum signals to return
+
+    Returns:
+        List of X signals with pain points, buying signals, and relevance scores.
+    """
+    settings = get_settings()
+
+    if not settings.xai_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="X/Grok discovery not configured. Set XAI_API_KEY in environment.",
+        )
+
+    try:
+        scout = XGrokScout(settings)
+
+        signals = await scout.search_x(
+            topics=request.topics,
+            search_queries=request.search_queries,
+            time_filter=request.time_filter,
+            limit=request.limit,
+        )
+
+        return {
+            "success": True,
+            "source": "x_grok",
+            "count": len(signals),
+            "signals": [s.model_dump() for s in signals],
+        }
+
+    except Exception as e:
+        logger.exception("X/Grok search failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/x/analyze")
+async def analyze_x_signals(signals: list[XSignal]) -> dict[str, Any]:
+    """
+    Analyze X signals to identify product opportunities.
+
+    Uses Grok to cluster signals and suggest product ideas.
+    """
+    settings = get_settings()
+
+    if not settings.xai_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="X/Grok not configured. Set XAI_API_KEY in environment.",
+        )
+
+    try:
+        scout = XGrokScout(settings)
+        analysis = await scout.analyze_signals(signals)
+
+        return {
+            "success": True,
+            "signal_count": len(signals),
+            "analysis": analysis,
+        }
+
+    except Exception as e:
+        logger.exception("X signal analysis failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/x/status")
+async def x_scout_status() -> dict[str, Any]:
+    """Check if X/Grok scout is configured and operational."""
+    settings = get_settings()
+    scout = XGrokScout(settings)
+
+    return {
+        "configured": scout.is_configured,
+        "api_key_set": bool(settings.xai_api_key),
+        "message": "X/Grok scout ready" if scout.is_configured else "XAI_API_KEY not set",
+    }
+
+
+# =============================================================================
+# Reddit Discovery Endpoints (Supplementary)
+# =============================================================================
 
 
 @router.get("/reddit/search")

@@ -116,17 +116,17 @@ async def get_config():
 # Router Registration (Add as implemented)
 # =============================================================================
 
-# Phase 0.2: Discovery
+# Phase 0.2: Discovery (X/Grok primary, Reddit supplementary)
 from app.routers import discovery
 app.include_router(discovery.router, prefix="/api/discovery", tags=["Discovery"])
+
+# Phase 0.5: Landing Pages (served from FastAPI, not Supabase Edge Functions)
+from app.routers import landing_pages
+app.include_router(landing_pages.router, tags=["Landing Pages"])
 
 # Phase 0.4: Scoring
 # from app.routers import scoring
 # app.include_router(scoring.router, prefix="/api/scoring", tags=["Scoring"])
-
-# Phase 0.5: Landing Pages
-# from app.routers import landing_pages
-# app.include_router(landing_pages.router, prefix="/api/landing-pages", tags=["Landing Pages"])
 
 # Phase 0.7: Validation
 # from app.routers import validation

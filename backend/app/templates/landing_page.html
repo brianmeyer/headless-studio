@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ copy.headline }}</title>
+    <meta name="description" content="{{ copy.subhead }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+            line-height: 1.2;
+        }
+
+        .subhead {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 32px;
+        }
+
+        .benefits {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .benefits li {
+            padding: 12px 0;
+            padding-left: 32px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .benefits li:last-child {
+            border-bottom: none;
+        }
+
+        .benefits li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        form {
+            background: #f8f9fa;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="email"] {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+        }
+
+        .trust-signals {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .trust-signals span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .subhead {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if copy.badge %}
+        <span class="badge">{{ copy.badge }}</span>
+        {% else %}
+        <span class="badge">Free Preview</span>
+        {% endif %}
+
+        <h1>{{ copy.headline }}</h1>
+        <p class="subhead">{{ copy.subhead }}</p>
+
+        <ul class="benefits">
+            {% for bullet in copy.bullets %}
+            <li>{{ bullet }}</li>
+            {% endfor %}
+        </ul>
+
+        <form action="/api/signup/{{ opportunity_id }}" method="POST">
+            <div class="form-group">
+                <label for="email">Get instant access to free samples:</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email address"
+                    required
+                    autocomplete="email"
+                >
+            </div>
+            <button type="submit">{{ copy.cta_text }}</button>
+        </form>
+
+        <p class="footer">
+            Full product launching soon. No spam, unsubscribe anytime.
+        </p>
+
+        <div class="trust-signals">
+            <span>🔒 Secure</span>
+            <span>📧 No Spam</span>
+            <span>🎁 Free Samples</span>
+        </div>
+    </div>
+
+    <!-- Simple tracking pixel -->
+    <img src="/api/track/{{ opportunity_id }}" width="1" height="1" style="display:none" alt="">
+</body>
+</html>
