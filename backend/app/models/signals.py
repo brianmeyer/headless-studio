@@ -5,7 +5,7 @@ Signal models for discovery and validation.
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class RedditSignal(BaseModel):
