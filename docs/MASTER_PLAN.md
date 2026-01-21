@@ -131,11 +131,50 @@ PHASE 2 → 3:
 
 # 2. SYSTEM OVERVIEW
 
-## 2.1 What This System Does (One Paragraph)
+## 2.1 Target Customer Profile
+
+```
+WHO WE'RE LOOKING FOR:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  NON-TECHNICAL PROFESSIONALS who would PAY $15-30 for ready-made           │
+│  digital products rather than create their own.                            │
+│                                                                             │
+│  CHARACTERISTICS:                                                           │
+│  ├── Want to use AI/ChatGPT but don't know how to write effective prompts │
+│  ├── Need templates, guides, or checklists but don't have time to create  │
+│  ├── Willing to pay for something that saves them time                    │
+│  └── Not technically inclined enough to build solutions themselves        │
+│                                                                             │
+│  EXAMPLE TARGET AUDIENCES:                                                  │
+│  ├── Real estate agents wanting ChatGPT help with listings                │
+│  ├── Small business owners needing social media templates                 │
+│  ├── Teachers looking for lesson planning resources                       │
+│  ├── Freelancers wanting client proposal templates                        │
+│  ├── Content creators needing workflow systems                            │
+│  ├── Coaches wanting client onboarding checklists                         │
+│  ├── HR managers, sales reps, consultants                                 │
+│  └── Therapists, fitness trainers, wedding planners, etc.                 │
+│                                                                             │
+│  NOT OUR TARGET (they'd build their own):                                   │
+│  ├── Developers / Programmers                                              │
+│  ├── AI researchers / Tech enthusiasts                                     │
+│  └── People just discussing AI news (no buying intent)                    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+WHY THIS MATTERS:
+├── Discovery scouts are prompted with these examples (not hardcoded limits)
+├── Grok can find ANY profession fitting this profile
+├── Signals from technical users are filtered out (low purchase intent)
+└── Products are priced and designed for this audience ($15-30, ready-to-use)
+```
+
+## 2.2 What This System Does (One Paragraph)
 
 Every Monday, the system scans X/Twitter (via Grok), Google Trends, and Reddit (when API approved) for product opportunities. It scores them for demand and purchase intent, checks for duplicates, creates a landing page, and generates ad copy. You review opportunities and choose how to validate: organically (free, multi-signal scoring) or with paid ads. Validated ideas get built automatically through a drafting → humanizing → QA pipeline. You review the final PDF and approve to publish. Pinterest posts weekly (automated or manual fallback), SEO blog posts build topical authority over time, and the system tracks the full sales funnel from signup to purchase.
 
-## 2.2 Key Numbers by Phase
+## 2.3 Key Numbers by Phase
 
 | Metric | Phase 0 | Phase 1 | Phase 2 | Phase 3 |
 |--------|---------|---------|---------|---------|
