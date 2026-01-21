@@ -133,7 +133,7 @@ PHASE 2 → 3:
 
 ## 2.1 What This System Does (One Paragraph)
 
-Every Monday, the system scans Reddit, X/Twitter, and Google Trends for product opportunities. It scores them for demand and purchase intent, checks for duplicates, creates a landing page, and generates ad copy. You review opportunities and choose how to validate: organically (free, multi-signal scoring) or with paid ads. Validated ideas get built automatically through a drafting → humanizing → QA pipeline. You review the final PDF and approve to publish. Pinterest posts weekly (automated or manual fallback), SEO blog posts build topical authority over time, and the system tracks the full sales funnel from signup to purchase.
+Every Monday, the system scans X/Twitter (via Grok), Google Trends, and Reddit (when API approved) for product opportunities. It scores them for demand and purchase intent, checks for duplicates, creates a landing page, and generates ad copy. You review opportunities and choose how to validate: organically (free, multi-signal scoring) or with paid ads. Validated ideas get built automatically through a drafting → humanizing → QA pipeline. You review the final PDF and approve to publish. Pinterest posts weekly (automated or manual fallback), SEO blog posts build topical authority over time, and the system tracks the full sales funnel from signup to purchase.
 
 ## 2.2 Key Numbers by Phase
 
@@ -158,11 +158,12 @@ MONDAY ────────────────────────�
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │  DISCOVERY  │───►│   SCORING   │───►│  DUPLICATE  │───►│   CREATE    │
 │             │    │             │    │    CHECK    │    │  LANDING    │
-│ • Reddit    │    │ • Demand    │    │             │    │   PAGE      │
-│ • X/Twitter │    │ • Intent    │    │ • 90-day    │    │             │
-│ • Trends    │    │ • Risk      │    │   history   │    │ • Supabase  │
-│ • Keywords  │    │             │    │             │    │   Edge      │
+│ • X/Grok ⭐ │    │ • Demand    │    │             │    │   PAGE      │
+│ • Trends    │    │ • Intent    │    │ • 90-day    │    │             │
+│ • Keywords  │    │ • Risk      │    │   history   │    │ • Supabase  │
+│ • Reddit*   │    │             │    │             │    │   Edge      │
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+* Reddit: Add when API approved
 
 
 TUESDAY (15-30 min) ───────────────────────────────────────────────────────────
@@ -334,22 +335,30 @@ WEEKLY/ONGOING ─────────────────────�
 │           │   Railway     │                                                │
 │           │    $5/mo      │                                                │
 │           │  (FastAPI)    │                                                │
+│           │               │                                                │
+│           │ • API Backend │                                                │
+│           │ • Landing     │                                                │
+│           │   Pages (HTML)│                                                │
 │           └───────┬───────┘                                                │
 │                   │                                                        │
-│     ┌─────────────┼─────────────┬───────────────────────┐                 │
-│     ▼             ▼             ▼                       ▼                 │
-│ ┌────────┐  ┌──────────┐  ┌──────────┐           ┌──────────┐            │
-│ │Supabase│  │ Supabase │  │ Supabase │           │ External │            │
-│ │Postgres│  │ Storage  │  │  Edge    │           │   APIs   │            │
-│ │  FREE  │  │   FREE   │  │Functions │           │          │            │
-│ │        │  │          │  │   FREE   │           │ • Groq   │            │
-│ │        │  │          │  │          │           │ • Google │            │
-│ │        │  │          │  │ • Landing│           │ • Reddit │            │
-│ │        │  │          │  │   pages  │           │ • Ads    │            │
-│ └────────┘  └──────────┘  └──────────┘           └──────────┘            │
+│     ┌─────────────┼─────────────────────────────────┐                     │
+│     ▼             ▼                                 ▼                     │
+│ ┌────────┐  ┌──────────┐                     ┌──────────┐                 │
+│ │Supabase│  │ Supabase │                     │ External │                 │
+│ │Postgres│  │ Storage  │                     │   APIs   │                 │
+│ │  FREE  │  │   FREE   │                     │          │                 │
+│ │        │  │          │                     │ • xAI    │                 │
+│ │        │  │ • PDFs   │                     │ • Groq   │                 │
+│ │        │  │ • Images │                     │ • Google │                 │
+│ │        │  │ • Assets │                     │ • Ads    │                 │
+│ └────────┘  └──────────┘                     └──────────┘                 │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Note on Landing Pages**: Landing pages are served directly from FastAPI on Railway
+using Jinja2 templates. Supabase Edge Functions cannot serve HTML (returns as plain text),
+so all landing page rendering happens on the FastAPI backend.
 
 ---
 
@@ -360,34 +369,41 @@ WEEKLY/ONGOING ─────────────────────�
 ```
 REQUIRED:
 
-1. Groq (Free LLM)
+1. xAI / Grok (Primary Discovery)
+   → https://console.x.ai → Get API key
+   → Provides native X search capability for discovering opportunities
+
+2. Groq (Free LLM)
    → https://console.groq.com → Get API key
 
-2. Google AI Studio (Gemini + Imagen)
+3. Google AI Studio (Gemini + Imagen)
    → https://aistudio.google.com → Get API key
 
-3. Supabase (Database + Landing Pages)
+4. Supabase (Database + Storage)
    → https://supabase.com → Create project → Get keys
+   → Note: Landing pages served from FastAPI, not Supabase Edge Functions
 
-4. Railway (Python Backend)
+5. Railway (Python Backend)
    → https://railway.app → Deploy from GitHub
 
-5. n8n Cloud (Workflows)
+6. n8n Cloud (Workflows)
    → https://app.n8n.cloud → $20/month
 
-6. Gumroad (Sales)
+7. Gumroad (Sales)
    → https://gumroad.com → Create seller account
 
-7. Pinterest (APPLY EARLY!)
+8. Pinterest (APPLY EARLY!)
    → https://developers.pinterest.com → Apply for API
    → Takes 3-7 days for approval
    → Manual fallback ready if not approved
+
+ADD WHEN APPROVED:
+- Reddit API (pending approval - add when available)
 
 SKIP FOR NOW:
 - Reddit Ads (add in Phase 1)
 - Google Ads (add in Phase 2)
 - Meta Ads (add in Phase 2)
-- xAI / Grok (optional)
 - MailerLite (optional)
 ```
 
@@ -397,7 +413,7 @@ SKIP FOR NOW:
 PHASE 1 - Add:
 ├── Reddit Ads account (https://ads.reddit.com)
 ├── MailerLite for email (https://www.mailerlite.com)
-└── xAI / Grok for X search (https://console.x.ai)
+└── Reddit API (when approved) for additional discovery signals
 
 PHASE 2 - Add ONE of:
 ├── Google Ads (complex setup, high intent)
@@ -415,13 +431,15 @@ PHASE 3 - Add as needed:
 
 ## 7.1 Sources
 
-| Source | API | If Fails |
-|--------|-----|----------|
-| Reddit | PRAW | Flag low confidence |
-| X/Twitter | Grok | Continue without |
-| Google Trends | pytrends | Continue without |
-| Keywords | DataForSEO | Use estimates |
-| Competitors | Apify | Continue without |
+| Source | API | Priority | If Fails |
+|--------|-----|----------|----------|
+| X/Twitter | Grok (xAI API) | **Primary** | Flag low confidence |
+| Google Trends | pytrends | Supplement | Continue without |
+| Keywords | DataForSEO | Supplement | Use estimates |
+| Competitors | Apify | Supplement | Continue without |
+| Reddit | PRAW | **Add when API approved** | Skip until approved |
+
+**Note**: Grok has native X search capability, making it ideal for discovering real-time pain points and requests on X/Twitter.
 
 ## 7.2 Scoring
 
@@ -429,9 +447,9 @@ PHASE 3 - Add as needed:
 OPPORTUNITY SCORE (0-100):
 
 Demand (0-50 points):
-├── Reddit mentions: 0-30 pts (with freshness decay)
-├── X/Twitter mentions: 0-10 pts
-└── Google Trends: 0-10 pts
+├── X/Twitter mentions: 0-30 pts (with freshness decay)
+├── Google Trends: 0-10 pts
+└── Reddit mentions: 0-10 pts (when available)
 
 Intent (0-40 points):
 ├── CPC level: 0-20 pts ($3+ CPC = high intent)
@@ -612,7 +630,7 @@ When you choose organic validation, system generates:
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  YOUR LANDING PAGE (share this):                                             │
-│  https://yourproject.supabase.co/functions/v1/lp/abc123                     │
+│  https://your-app.railway.app/lp/abc123                                     │
 │  [Copy Link]                                                                 │
 │                                                                              │
 │  ═══════════════════════════════════════════════════════════════════════════ │

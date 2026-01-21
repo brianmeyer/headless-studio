@@ -71,11 +71,59 @@ pytest
 railway up
 ```
 
+## Supabase Setup
+
+### Running the Initial Migration
+
+1. Go to your Supabase project: https://***REMOVED***
+2. Navigate to the SQL Editor (left sidebar)
+3. Click "New Query"
+4. Copy the contents of `supabase/migrations/001_initial_schema.sql`
+5. Paste into the SQL Editor and click "Run"
+6. Verify tables were created by checking the "Table Editor" section
+
+### Supabase Credentials
+
+Add these to your `.env` file:
+
+```bash
+SUPABASE_URL=https://***REMOVED***
+SUPABASE_ANON_KEY=***REMOVED_JWT***
+SUPABASE_SERVICE_KEY=***REMOVED_JWT***
+```
+
+**Note**: The service key provides full access to your database. Keep it secret and never commit to version control.
+
+### What the Migration Creates
+
+The migration creates:
+- **8 tables**: opportunities, smoke_test_signups, products, pins, blog_posts, seo_clusters, sales, system_logs
+- **Indexes**: For efficient queries on status, dates, foreign keys
+- **2 views**: active_validations, product_performance (for easier analytics)
+- **Auto-update trigger**: Keeps `updated_at` timestamps current
+
 ## Current Phase
 
 **Phase 0: Foundation**
 
-Working on: Task 0.1.1 - Initialize Repository
+### Completed:
+- ✅ Task 0.1.1: Initialize Repository
+- ✅ Task 0.1.3: Create Supabase Schema (SQL file created at `supabase/migrations/001_initial_schema.sql`)
+- ✅ `.env.example` created with all environment variables
+
+### In Progress:
+- ⏳ **Run the Supabase migration** - Use MCP to execute `supabase/migrations/001_initial_schema.sql`
+- ⏳ Task 0.1.2: Create `backend/app/main.py` and `backend/app/config.py`
+
+### Next:
+- Task 0.1.4: Finalize environment configuration
+- Verify backend runs with `uvicorn app.main:app --reload`
+
+### Resume Instructions for Claude:
+1. Use Supabase MCP to run the migration SQL from `supabase/migrations/001_initial_schema.sql`
+2. Create `backend/app/config.py` with pydantic-settings
+3. Create `backend/app/main.py` with FastAPI app
+4. Test that uvicorn starts successfully
 
 ## License
 

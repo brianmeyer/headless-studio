@@ -31,15 +31,16 @@ headless-studio/
 │   │   │   ├── validation.py
 │   │   │   ├── manufacturing.py
 │   │   │   ├── publishing.py
+│   │   │   ├── landing_pages.py # Landing page routes (GET /lp/{id})
 │   │   │   └── webhooks.py
 │   │   ├── services/           # Business logic
-│   │   │   ├── reddit_scout.py
-│   │   │   ├── x_scout.py
+│   │   │   ├── x_scout.py      # Primary discovery (xAI/Grok)
 │   │   │   ├── trends_scout.py
 │   │   │   ├── keyword_scout.py
+│   │   │   ├── reddit_scout.py # Add when Reddit API approved
 │   │   │   ├── scorer.py
 │   │   │   ├── duplicate_checker.py
-│   │   │   ├── landing_page.py
+│   │   │   ├── landing_page.py # Copy generation service
 │   │   │   ├── sample_generator.py
 │   │   │   ├── ad_manager.py
 │   │   │   ├── drafter.py
@@ -49,6 +50,9 @@ headless-studio/
 │   │   │   ├── qa_reviewer.py
 │   │   │   ├── gumroad.py
 │   │   │   └── pinterest.py
+│   │   ├── templates/          # Jinja2 HTML templates
+│   │   │   ├── landing_page.html
+│   │   │   └── thank_you.html
 │   │   └── utils/
 │   ├── requirements.txt
 │   ├── Dockerfile
@@ -56,9 +60,7 @@ headless-studio/
 ├── supabase/
 │   ├── migrations/             # SQL migrations
 │   │   └── 001_initial_schema.sql
-│   └── functions/              # Edge Functions
-│       ├── landing-page/
-│       └── track-visit/
+│   └── seed.sql                # Optional seed data
 ├── n8n/                        # Workflow JSON exports
 │   ├── 01_weekly_discovery.json
 │   ├── 02_gate1_handler.json
@@ -99,8 +101,12 @@ headless-studio/
   pydantic-settings==2.1.0
   httpx==0.26.0
   supabase==2.3.0
-  praw==7.7.1
+  openai==1.12.0        # For xAI/Grok API (OpenAI-compatible)
   python-dotenv==1.0.0
+  pytrends==4.9.2       # For Google Trends
+  jinja2==3.1.2         # For landing page HTML templates
+  python-multipart==0.0.6  # For form handling
+  # praw==7.7.1         # Add when Reddit API approved
   ```
 - [ ] Create `backend/app/main.py` with basic FastAPI app
 - [ ] Create `backend/app/config.py` with settings class
@@ -109,10 +115,10 @@ headless-studio/
 **Done when**: `uvicorn app.main:app --reload` runs without errors.
 
 ### Task 0.1.3: Create Supabase Schema
-- [ ] Create `supabase/migrations/001_initial_schema.sql`
-- [ ] Include tables: `opportunities`, `products`, `pins`, `sales`, `smoke_test_signups`, `blog_posts`, `system_logs`
-- [ ] Include all indexes from Master Plan
-- [ ] Document how to run migration in README
+- [x] Create `supabase/migrations/001_initial_schema.sql`
+- [x] Include tables: `opportunities`, `products`, `pins`, `sales`, `smoke_test_signups`, `blog_posts`, `system_logs`
+- [x] Include all indexes from Master Plan
+- [x] Document how to run migration in README
 
 **Schema reference**: See Master Plan Section 18 for full schema.
 
@@ -121,22 +127,20 @@ headless-studio/
 ### Task 0.1.4: Environment Configuration
 - [ ] Document all required environment variables in `.env.example`:
   ```
-  # Supabase
+  # Required
+  XAI_API_KEY=          # From console.x.ai (for Grok + X search)
+  GROQ_API_KEY=
+  GOOGLE_AI_API_KEY=
   SUPABASE_URL=
   SUPABASE_ANON_KEY=
   SUPABASE_SERVICE_KEY=
-  
-  # LLMs
-  GROQ_API_KEY=
-  GOOGLE_AI_API_KEY=
-  
-  # Reddit (PRAW)
+
+  # Add when approved
   REDDIT_CLIENT_ID=
   REDDIT_CLIENT_SECRET=
   REDDIT_USER_AGENT=
-  
+
   # Optional (Phase 1+)
-  XAI_API_KEY=
   REDDIT_ADS_CLIENT_ID=
   REDDIT_ADS_CLIENT_SECRET=
   GUMROAD_ACCESS_TOKEN=
@@ -144,89 +148,91 @@ headless-studio/
   ```
 - [ ] Create `backend/app/config.py` that loads these with pydantic-settings
 - [ ] Add validation for required vs optional keys
+- [ ] Add `reddit_configured` property that checks if Reddit credentials are present
 
 **Done when**: App loads config without errors when `.env` has required keys.
 
 ---
 
-## Phase 0.2: Discovery - Reddit Scout
+## Phase 0.2: Discovery - X/Grok Scout (Primary)
 
-### Task 0.2.1: Reddit Scout Service
-- [ ] Create `backend/app/services/reddit_scout.py`
-- [ ] Implement `RedditScout` class:
+### Task 0.2.1: X/Grok Scout Service
+- [ ] Create `backend/app/services/x_scout.py`
+- [ ] Implement `XGrokScout` class using xAI API:
   ```python
-  class RedditScout:
+  class XGrokScout:
       def __init__(self, config: Settings):
-          # Initialize PRAW client
-      
-      async def search_subreddits(
-          self, 
-          subreddits: list[str], 
-          keywords: list[str],
-          time_filter: str = "month",
-          limit: int = 100
-      ) -> list[RedditSignal]:
-          # Search for posts matching keywords
-          # Return structured signals
-      
-      async def get_trending_posts(
+          # Initialize xAI client with XAI_API_KEY
+          # Grok has native X search capability
+
+      async def search_x(
           self,
-          subreddits: list[str],
-          limit: int = 50
-      ) -> list[RedditSignal]:
-          # Get hot/rising posts
+          topics: list[str],
+          search_queries: list[str] | None = None,
+          time_filter: str = "week",
+          limit: int = 100
+      ) -> list[XSignal]:
+          # Use Grok to search X for pain points, requests, frustrations
+          # Search queries like: "{topic} need help", "{topic} frustrated",
+          # "{topic} wish there was", "{topic} looking for"
+          # Return structured signals
+
+      async def analyze_signals(
+          self,
+          raw_tweets: list[dict]
+      ) -> list[XSignal]:
+          # Use Grok to analyze and score relevance
   ```
-- [ ] Create `backend/app/models/signals.py` with `RedditSignal` model:
+- [ ] Create `backend/app/models/signals.py` with `XSignal` model:
   ```python
-  class RedditSignal(BaseModel):
-      post_id: str
-      title: str
-      subreddit: str
-      score: int
-      num_comments: int
+  class XSignal(BaseModel):
+      tweet_id: str
+      text: str
+      author_username: str
+      author_followers: int | None
+      engagement_score: int  # likes + retweets + replies
+      created_at: datetime
       url: str
-      created_utc: datetime
-      author: str
-      selftext: str | None
-      relevance_score: float  # How relevant to keywords
+      relevance_score: float  # How relevant to product opportunity
+      pain_point_type: str | None  # "request", "frustration", "question"
   ```
-- [ ] Handle rate limits gracefully
+- [ ] Handle xAI API rate limits gracefully
 - [ ] Add logging for debugging
 
-**Done when**: Can call `reddit_scout.search_subreddits(["chatgpt"], ["prompts"])` and get results.
+**Done when**: Can call `x_scout.search_x(["chatgpt prompts", "AI tools"])` and get results.
 
-### Task 0.2.2: Reddit Scout API Endpoint
+### Task 0.2.2: X/Grok Scout API Endpoint
 - [ ] Create `backend/app/routers/discovery.py`
-- [ ] Add endpoint `POST /api/discovery/reddit`:
+- [ ] Add endpoint `POST /api/discovery/x`:
   ```python
-  @router.post("/reddit")
-  async def search_reddit(
-      subreddits: list[str],
-      keywords: list[str],
-      time_filter: str = "month"
-  ) -> RedditSearchResponse:
-      # Call RedditScout
+  @router.post("/x")
+  async def search_x(
+      topics: list[str],
+      search_queries: list[str] | None = None,
+      time_filter: str = "week"
+  ) -> XSearchResponse:
+      # Call XGrokScout
       # Return signals
   ```
-- [ ] Add error handling for Reddit API failures
+- [ ] Add error handling for xAI API failures
 - [ ] Add response model
 
-**Done when**: Can hit endpoint and get Reddit signals back.
+**Done when**: Can hit endpoint and get X signals back.
 
-### Task 0.2.3: Reddit Scout Tests
-- [ ] Create `backend/tests/test_reddit_scout.py`
+### Task 0.2.3: X/Grok Scout Tests
+- [ ] Create `backend/tests/test_x_scout.py`
 - [ ] Test: Search returns results for valid query
 - [ ] Test: Empty results handled gracefully
-- [ ] Test: Invalid subreddit handled
+- [ ] Test: Invalid topic handled
 - [ ] Test: Rate limit behavior
 
 **Done when**: All tests pass.
 
 ---
 
-## Phase 0.3: Discovery - Additional Scouts
+## Phase 0.3: Discovery - Additional Scouts (Trends + Keywords)
 
-### Task 0.3.1: Google Trends Scout (Optional)
+### Task 0.3.1: Google Trends Scout (Supplement)
 - [ ] Create `backend/app/services/trends_scout.py`
 - [ ] Use `pytrends` library
 - [ ] Implement:
@@ -238,7 +244,7 @@ headless-studio/
           timeframe: str = "today 3-m"
       ) -> TrendsData:
           # Return trend data
-      
+
       async def get_related_queries(
           self,
           keyword: str
@@ -262,7 +268,7 @@ headless-studio/
           keyword: str
       ) -> KeywordData:
           # Returns: volume, cpc, competition
-      
+
       async def get_related_keywords(
           self,
           seed_keyword: str,
@@ -289,16 +295,28 @@ headless-studio/
       async def run_discovery(
           self,
           topics: list[str],
-          subreddits: list[str]
+          subreddits: list[str] | None = None
       ) -> list[RawOpportunity]:
-          # 1. Search Reddit
-          # 2. Get trends (optional)
-          # 3. Get keyword data
-          # 4. Combine into opportunities
-          # 5. Return raw (unscored) opportunities
+          # 1. Search X via Grok (primary)
+          x_signals = await self.x_scout.search_x(topics)
+
+          # 2. Get trends (supplement)
+          trends = await self.trends_scout.get_trends(topics)
+
+          # 3. Get keywords
+          keywords = await self.keyword_scout.get_data(topics)
+
+          # 4. Reddit (only if configured)
+          reddit_signals = []
+          if self.config.reddit_configured:
+              reddit_signals = await self.reddit_scout.search(subreddits, topics)
+
+          # 5. Combine and score
+          # 6. Return raw (unscored) opportunities
   ```
 - [ ] Handle partial failures (some scouts fail, others succeed)
 - [ ] Track which sources returned data for confidence scoring
+- [ ] X/Grok is required; other sources are supplementary
 
 **Done when**: Can run full discovery and get combined opportunities.
 
@@ -330,10 +348,13 @@ headless-studio/
               confidence=confidence
           )
   ```
-- [ ] Implement demand scoring (Reddit mentions, freshness decay)
+- [ ] Implement demand scoring:
+  - X/Twitter mentions: 0-30 pts (primary, with freshness decay)
+  - Google Trends: 0-10 pts
+  - Reddit mentions: 0-10 pts (when available)
 - [ ] Implement intent scoring (CPC, competitor presence)
 - [ ] Implement competition penalty
-- [ ] Implement confidence level (based on data completeness)
+- [ ] Implement confidence level (based on data completeness - higher if X data available)
 
 **Done when**: Can score opportunities, scores match expected ranges.
 
@@ -376,54 +397,104 @@ headless-studio/
 
 ## Phase 0.5: Landing Page System
 
-### Task 0.5.1: Landing Page Edge Function
-- [ ] Create `supabase/functions/landing-page/index.ts`
-- [ ] Serve dynamic landing page based on opportunity_id:
-  ```typescript
-  import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-  
-  serve(async (req) => {
-    const url = new URL(req.url)
-    const opportunityId = url.pathname.split('/').pop()
-    
-    // Fetch opportunity from database
-    // Render HTML with: headline, bullets, CTA form
-    // Track visit
-    // Return HTML
-  })
+**Note**: Landing pages are served from FastAPI on Railway, NOT Supabase Edge Functions.
+Supabase Edge Functions cannot serve HTML (returns `text/plain` instead of `text/html`).
+
+### Task 0.5.1: Landing Page Templates
+- [ ] Create `backend/app/templates/` directory
+- [ ] Create `backend/app/templates/landing_page.html` Jinja2 template:
+  ```html
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>{{ copy.headline }}</title>
+      <style>
+          /* Mobile-responsive CSS */
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+          /* ... styling for container, form, bullets, etc. */
+      </style>
+  </head>
+  <body>
+      <div class="container">
+          <h1>{{ copy.headline }}</h1>
+          <p class="subhead">{{ copy.subhead }}</p>
+          <ul class="benefits">
+              {% for bullet in copy.bullets %}
+              <li>{{ bullet }}</li>
+              {% endfor %}
+          </ul>
+          <form action="/api/signup/{{ opportunity_id }}" method="POST">
+              <input type="email" name="email" placeholder="Enter your email" required>
+              <button type="submit">{{ copy.cta_text }}</button>
+          </form>
+          <p class="footer">Full product launching soon. No spam, unsubscribe anytime.</p>
+      </div>
+  </body>
+  </html>
   ```
-- [ ] HTML template with:
-  - Headline (from opportunity)
-  - 3 benefit bullets
-  - Email capture form
-  - "Full product launching soon" footer
-- [ ] Mobile-responsive CSS (inline)
-- [ ] Form submits to track-signup endpoint
+- [ ] Create `backend/app/templates/thank_you.html` for post-signup page with samples
+- [ ] Include mobile-responsive CSS (inline in templates)
 
-**Done when**: Can visit `{supabase}/functions/v1/landing-page/{id}` and see rendered page.
+**Done when**: Templates exist and render correctly with test data.
 
-### Task 0.5.2: Visit Tracking
+### Task 0.5.2: Landing Page Router
+- [ ] Create `backend/app/routers/landing_pages.py`
+- [ ] Add Jinja2 template configuration to FastAPI app
+- [ ] Implement landing page route:
+  ```python
+  from fastapi import APIRouter, Request, HTTPException
+  from fastapi.responses import HTMLResponse
+  from fastapi.templating import Jinja2Templates
+
+  router = APIRouter()
+  templates = Jinja2Templates(directory="app/templates")
+
+  @router.get("/lp/{opportunity_id}", response_class=HTMLResponse)
+  async def landing_page(request: Request, opportunity_id: UUID):
+      # Fetch opportunity from database
+      # Increment visit counter
+      # Render template with opportunity data
+      return templates.TemplateResponse("landing_page.html", {
+          "request": request,
+          "opportunity_id": opportunity_id,
+          "copy": opportunity.landing_page_copy or default_copy
+      })
+  ```
 - [ ] Track page visits in `opportunities.visits` counter
-- [ ] Either inline in landing-page function or separate endpoint
-- [ ] Don't double-count (use session/cookie or IP-based)
+- [ ] Handle 404 for invalid opportunity IDs
 
-**Done when**: Visit counter increments on page load.
+**Done when**: Can visit `https://your-app.railway.app/lp/{id}` and see rendered HTML page.
 
-### Task 0.5.3: Signup Capture
-- [ ] Create `supabase/functions/track-signup/index.ts` (or handle in landing-page)
-- [ ] On form submit:
-  - Validate email
-  - Insert into `smoke_test_signups`
-  - Increment `opportunities.signups`
-  - Return success page with samples (Phase 0.6)
-- [ ] Handle duplicate emails gracefully
+### Task 0.5.3: Signup Handler
+- [ ] Create signup endpoint in `backend/app/routers/landing_pages.py`:
+  ```python
+  @router.post("/api/signup/{opportunity_id}", response_class=HTMLResponse)
+  async def handle_signup(
+      request: Request,
+      opportunity_id: UUID,
+      email: str = Form(...)
+  ):
+      # Validate email format
+      # Check for duplicate signups
+      # Insert into `smoke_test_signups`
+      # Increment `opportunities.signups`
+      # Fetch samples and render thank_you.html
+      return templates.TemplateResponse("thank_you.html", {
+          "request": request,
+          "samples": opportunity.samples or []
+      })
+  ```
+- [ ] Handle duplicate emails gracefully (show samples again, don't double-count)
+- [ ] Store source/referrer info for tracking
 
-**Done when**: Can submit email and see it in database.
+**Done when**: Can submit email via form and see thank you page with samples.
 
-### Task 0.5.4: Landing Page Copy Generator
+### Task 0.5.4: Landing Page Copy Generator Service
 - [ ] Create `backend/app/services/landing_page.py`
-- [ ] Use Gemini to generate:
+- [ ] Use Gemini to generate marketing copy:
   ```python
   class LandingPageGenerator:
       async def generate_copy(
@@ -433,10 +504,19 @@ headless-studio/
           # Generate: headline, subhead, bullets, cta_text
           # Store in opportunity.landing_page_copy
   ```
+- [ ] Create `LandingPageCopy` Pydantic model:
+  ```python
+  class LandingPageCopy(BaseModel):
+      headline: str
+      subhead: str
+      bullets: list[str]
+      cta_text: str
+  ```
 - [ ] Prompt should create benefit-focused copy
 - [ ] Call this during discovery, before Gate 1
+- [ ] Store generated copy in `opportunities.landing_page_copy` JSONB field
 
-**Done when**: Opportunities have generated landing page copy.
+**Done when**: Opportunities have generated landing page copy that renders in templates.
 
 ---
 
@@ -633,10 +713,10 @@ headless-studio/
 
 ### Task 0.10.3: Supabase Setup
 - [ ] Run migrations in Supabase
-- [ ] Deploy Edge Functions
-- [ ] Verify landing pages work with production DB
+- [ ] Verify database tables created correctly
+- [ ] Test database connectivity from Railway backend
 
-**Done when**: Full system works with production Supabase.
+**Done when**: Backend on Railway connects to production Supabase database.
 
 ### Task 0.10.4: N8N Setup
 - [ ] Import workflows to n8n Cloud
@@ -653,7 +733,7 @@ Before moving to Phase 1, verify:
 
 - [ ] Discovery runs and finds opportunities
 - [ ] Opportunities are scored and deduplicated
-- [ ] Landing pages render with copy
+- [ ] Landing pages render with copy (via FastAPI/Railway)
 - [ ] Signups are captured and samples delivered
 - [ ] Organic validation points can be logged
 - [ ] Gate 1 approval works via n8n
@@ -662,9 +742,109 @@ Before moving to Phase 1, verify:
 
 **Phase 0 Success Criteria:**
 1. System finds real opportunities
-2. Landing pages capture signups
+2. Landing pages capture signups (served from Railway, not Supabase)
 3. You successfully validate one idea organically
 4. Everything runs without manual intervention (except approvals)
+
+---
+
+# PHASE 0.X: REDDIT SCOUT (WHEN APPROVED)
+
+**Status**: ⏸️ SKIP UNTIL REDDIT API APPROVED
+**Prerequisite**: Reddit API access approved
+**Note**: Once approved, Reddit Scout can be added to the Discovery Aggregator as an additional signal source
+
+---
+
+## Phase 0.X.1: Reddit Scout Service
+
+### Task 0.X.1.1: Reddit Scout Service
+- [ ] Create `backend/app/services/reddit_scout.py`
+- [ ] Implement `RedditScout` class:
+  ```python
+  class RedditScout:
+      def __init__(self, config: Settings):
+          # Initialize PRAW client
+
+      async def search_subreddits(
+          self,
+          subreddits: list[str],
+          keywords: list[str],
+          time_filter: str = "month",
+          limit: int = 100
+      ) -> list[RedditSignal]:
+          # Search for posts matching keywords
+          # Return structured signals
+
+      async def get_trending_posts(
+          self,
+          subreddits: list[str],
+          limit: int = 50
+      ) -> list[RedditSignal]:
+          # Get hot/rising posts
+  ```
+- [ ] Create `RedditSignal` model in `backend/app/models/signals.py`:
+  ```python
+  class RedditSignal(BaseModel):
+      post_id: str
+      title: str
+      subreddit: str
+      score: int
+      num_comments: int
+      url: str
+      created_utc: datetime
+      author: str
+      selftext: str | None
+      relevance_score: float  # How relevant to keywords
+  ```
+- [ ] Handle PRAW rate limits gracefully
+- [ ] Add logging for debugging
+
+**Done when**: Can call `reddit_scout.search_subreddits(["chatgpt"], ["prompts"])` and get results.
+
+### Task 0.X.1.2: Reddit Scout API Endpoint
+- [ ] Add endpoint `POST /api/discovery/reddit` to `backend/app/routers/discovery.py`:
+  ```python
+  @router.post("/reddit")
+  async def search_reddit(
+      subreddits: list[str],
+      keywords: list[str],
+      time_filter: str = "month"
+  ) -> RedditSearchResponse:
+      # Call RedditScout
+      # Return signals
+  ```
+- [ ] Add error handling for Reddit API failures
+- [ ] Add response model
+
+**Done when**: Can hit endpoint and get Reddit signals back.
+
+### Task 0.X.1.3: Reddit Scout Tests
+- [ ] Create `backend/tests/test_reddit_scout.py`
+- [ ] Test: Search returns results for valid query
+- [ ] Test: Empty results handled gracefully
+- [ ] Test: Invalid subreddit handled
+- [ ] Test: Rate limit behavior
+
+**Done when**: All tests pass.
+
+---
+
+## Phase 0.X.2: Integrate Reddit into Discovery Aggregator
+
+### Task 0.X.2.1: Update Discovery Aggregator
+- [ ] Add Reddit scout to `DiscoveryAggregator`:
+  ```python
+  # In run_discovery method, Reddit signals are already handled:
+  # 4. Reddit (only if configured)
+  reddit_signals = []
+  if self.config.reddit_configured:
+      reddit_signals = await self.reddit_scout.search(subreddits, topics)
+  ```
+- [ ] Update scoring to include Reddit mentions (0-10 pts when available)
+- [ ] Update confidence scoring to reflect Reddit data availability
+
+**Done when**: Discovery aggregator uses Reddit data when available.
 
 ---
 
@@ -932,10 +1112,15 @@ opportunities = result.data
 
 Always check if optional keys exist before using:
 ```python
-if config.xai_api_key:
-    # Use X/Twitter search
+# X/Grok is required - will fail if not configured
+x_signals = await self.x_scout.search_x(topics)
+
+# Reddit is optional - only use if configured
+if config.reddit_configured:
+    reddit_signals = await self.reddit_scout.search(subreddits, topics)
 else:
-    # Skip X search, log warning
+    reddit_signals = []
+    logger.info("Reddit not configured, skipping Reddit search")
 ```
 
 ---
