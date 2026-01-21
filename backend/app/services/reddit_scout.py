@@ -3,6 +3,17 @@ Reddit Scout Service - Discovers product opportunities from Reddit.
 
 Searches subreddits for pain points, buying signals, and product demand.
 Uses PRAW (Python Reddit API Wrapper) for Reddit API access.
+
+TARGET CUSTOMER PROFILE:
+We're looking for NON-TECHNICAL professionals who would PAY for ready-made digital
+products ($15-30) rather than create their own. Examples:
+- Real estate agents wanting ChatGPT help with listings
+- Small business owners needing social media templates
+- Teachers looking for lesson planning resources
+- Freelancers wanting client proposal templates
+- Coaches wanting client onboarding checklists
+
+AVOID signals from developers, programmers, AI researchers (they'd build their own).
 """
 
 import logging
@@ -113,12 +124,32 @@ class RedditScout:
     def __init__(self):
         """Initialize Reddit client with credentials."""
         settings = get_settings()
-        self.reddit = praw.Reddit(
-            client_id=settings.reddit_client_id,
-            client_secret=settings.reddit_client_secret,
-            user_agent=settings.reddit_user_agent,
-        )
+        self._client_id = settings.reddit_client_id
+        self._client_secret = settings.reddit_client_secret
+        self._user_agent = settings.reddit_user_agent
         self.max_results = settings.max_opportunities_per_run
+        self._reddit = None
+
+    @property
+    def is_configured(self) -> bool:
+        """Check if Reddit API is configured with real credentials."""
+        return (
+            self._client_id
+            and self._client_secret
+            and self._client_id != "placeholder"
+            and self._client_secret != "placeholder"
+        )
+
+    @property
+    def reddit(self):
+        """Lazy-load Reddit client."""
+        if self._reddit is None:
+            self._reddit = praw.Reddit(
+                client_id=self._client_id,
+                client_secret=self._client_secret,
+                user_agent=self._user_agent,
+            )
+        return self._reddit
 
     def search_subreddits(
         self,

@@ -191,6 +191,26 @@ class XGrokScout:
         # Build the prompt for analyzing X posts - request JSON format directly
         prompt = f"""Search X/Twitter for posts about: "{query}"
 
+TARGET CUSTOMER PROFILE:
+We're looking for NON-TECHNICAL people who would PAY for ready-made digital products
+rather than create their own. These are professionals and everyday people who:
+- Want to use AI/ChatGPT but don't know how to write effective prompts
+- Need templates, guides, or checklists but don't have time to create them
+- Are willing to pay $15-30 for something that saves them time
+
+Examples of ideal target audiences:
+- Real estate agents wanting ChatGPT help with listings
+- Small business owners needing social media templates
+- Teachers looking for lesson planning resources
+- Freelancers wanting client proposal templates
+- Content creators needing workflow systems
+- Coaches wanting client onboarding checklists
+
+AVOID posts from:
+- Developers/programmers (they'd build their own)
+- AI researchers or tech enthusiasts (too technical)
+- People just discussing AI news (no buying intent)
+
 Find posts where users are:
 - Expressing frustration or pain points
 - Asking for help or recommendations
@@ -282,6 +302,10 @@ Return ONLY the JSON, no other text.
         This provides compatibility with older API access.
         """
         prompt = f"""Search X/Twitter for posts about: "{query}"
+
+TARGET: NON-TECHNICAL professionals (real estate agents, small business owners, teachers,
+freelancers, coaches, etc.) who would PAY $15-30 for ready-made digital products.
+AVOID: developers, programmers, AI researchers, tech enthusiasts.
 
 Find posts where users are expressing frustration, asking for help, or looking for solutions.
 Focus on posts related to: {', '.join(topics)}
@@ -460,10 +484,19 @@ Return a JSON response with tweets array containing:
 
 {signal_summary}
 
+TARGET CUSTOMER CONTEXT:
+We sell digital products ($15-30) to NON-TECHNICAL professionals who want ready-made
+solutions. They would pay for something that saves them time rather than create it themselves.
+
+Examples: real estate agents, small business owners, teachers, freelancers, coaches,
+content creators, HR managers, sales reps, consultants, therapists, fitness trainers.
+
+NOT our target: developers, programmers, AI researchers, or tech enthusiasts.
+
 Identify:
-1. Common pain points across posts
+1. Common pain points across posts (focus on non-technical user struggles)
 2. Specific product ideas that could solve these problems
-3. Target audience characteristics
+3. Target audience characteristics (profession, skill level, willingness to pay)
 4. Suggested product types (prompt pack, guide, template, checklist)
 5. Potential keywords for SEO
 
