@@ -188,7 +188,7 @@ class XGrokScout:
         """
         from_date, to_date = self._get_date_range(time_filter)
 
-        # Build the prompt for analyzing X posts
+        # Build the prompt for analyzing X posts - request JSON format directly
         prompt = f"""Search X/Twitter for posts about: "{query}"
 
 Find posts where users are:
@@ -197,37 +197,22 @@ Find posts where users are:
 - Looking for tools, templates, or resources
 - Complaining about existing solutions
 
-For each relevant post you find, analyze it and provide:
-1. The full tweet text
-2. Author username and follower count if available
-3. Engagement metrics (likes, retweets, replies)
-4. Type of signal: "request", "frustration", or "question"
-5. Specific pain points mentioned
-6. Any buying signals (willingness to pay, urgency)
-7. Relevance score from 0.0 to 1.0
-
-Return a structured JSON response with this format:
+For each relevant post found, return as JSON with this exact format:
 {{
     "tweets": [
         {{
-            "tweet_id": "the_tweet_id",
             "text": "full tweet content",
-            "author_username": "username",
-            "author_followers": 1000,
-            "likes": 10,
-            "retweets": 2,
-            "replies": 5,
-            "created_at": "2026-01-20T10:00:00Z",
+            "username": "author_username",
             "url": "https://x.com/username/status/tweet_id",
-            "pain_point_type": "frustration",
-            "pain_points": ["specific pain point"],
-            "buying_signals": ["would pay for this"],
-            "relevance_score": 0.85
+            "type": "frustration|request|question|recommendation",
+            "pain_points": ["specific pain point mentioned"],
+            "buying_signals": ["any willingness to pay or urgency"]
         }}
     ]
 }}
 
-Focus on finding genuine product opportunities. Only include posts that show real demand or pain points related to: {', '.join(topics)}
+Focus on finding genuine product opportunities related to: {', '.join(topics)}
+Return ONLY the JSON, no other text.
 """
 
         try:
@@ -249,8 +234,6 @@ Focus on finding genuine product opportunities. Only include posts that show rea
                                 "to_date": to_date,
                             }
                         ],
-                        "include": ["inline_citations"],
-                        "temperature": 0.3,
                     },
                 )
 
@@ -262,17 +245,18 @@ Focus on finding genuine product opportunities. Only include posts that show rea
                 data = response.json()
 
                 # Extract the output text from the response
+                # Structure: output -> [... , {content: [{type: "output_text", text: "..."}]}]
                 output_text = ""
-                if "output" in data:
-                    for item in data.get("output", []):
-                        if item.get("type") == "message":
-                            for content in item.get("content", []):
-                                if content.get("type") == "text":
-                                    output_text = content.get("text", "")
-                                    break
-
-                # Get citations for reference
-                citations = data.get("citations", [])
+                citations = []
+                for item in data.get("output", []):
+                    if "content" in item:
+                        for content in item.get("content", []):
+                            if content.get("type") == "output_text":
+                                output_text = content.get("text", "")
+                            # Extract citations from annotations
+                            for annotation in content.get("annotations", []):
+                                if annotation.get("type") == "url_citation":
+                                    citations.append(annotation.get("url", ""))
 
                 # Parse the response
                 signals = self._parse_grok_response(output_text, query, citations)
@@ -351,40 +335,39 @@ Return a JSON response with tweets array containing:
 
         try:
             # Try to extract JSON from the response
-            json_str = content
+            json_str = content.strip()
             if "```json" in content:
                 json_str = content.split("```json")[1].split("```")[0]
             elif "```" in content:
                 json_str = content.split("```")[1].split("```")[0]
 
             data = json.loads(json_str.strip())
-            tweets = data.get("tweets", [])
+
+            # Handle both "tweets" and "posts" keys (API may return either)
+            tweets = data.get("tweets", data.get("posts", []))
 
             for tweet in tweets:
                 try:
-                    # Calculate engagement score
+                    # Get username (may be "username" or "author_username")
+                    username = tweet.get("username", tweet.get("author_username", "unknown"))
+
+                    # Get URL and extract tweet_id from it
+                    url = tweet.get("url", "")
+                    tweet_id = ""
+                    if url and "/status/" in url:
+                        tweet_id = url.split("/status/")[-1].split("?")[0]
+                    if not tweet_id:
+                        tweet_id = f"gen_{hash(tweet.get('text', ''))}"
+
+                    # Map "type" to "pain_point_type"
+                    pain_point_type = tweet.get("type", tweet.get("pain_point_type"))
+
+                    # Calculate engagement score if available
                     engagement = (
                         tweet.get("likes", 0)
                         + tweet.get("retweets", 0) * 2
                         + tweet.get("replies", 0) * 3
                     )
-
-                    # Build tweet URL if not provided
-                    username = tweet.get("author_username", "unknown")
-                    tweet_id = tweet.get("tweet_id", f"gen_{hash(tweet.get('text', ''))}")
-                    url = tweet.get("url", f"https://x.com/{username}/status/{tweet_id}")
-
-                    # Parse created_at
-                    created_at_str = tweet.get("created_at")
-                    if created_at_str:
-                        try:
-                            created_at = datetime.fromisoformat(
-                                created_at_str.replace("Z", "+00:00")
-                            )
-                        except ValueError:
-                            created_at = datetime.utcnow()
-                    else:
-                        created_at = datetime.utcnow()
 
                     signal = XSignal(
                         tweet_id=tweet_id,
@@ -392,10 +375,10 @@ Return a JSON response with tweets array containing:
                         author_username=username,
                         author_followers=tweet.get("author_followers"),
                         engagement_score=engagement,
-                        created_at=created_at,
-                        url=url,
-                        relevance_score=float(tweet.get("relevance_score", 0.5)),
-                        pain_point_type=tweet.get("pain_point_type"),
+                        created_at=datetime.now(tz=None),  # API doesn't always return dates
+                        url=url or f"https://x.com/{username}/status/{tweet_id}",
+                        relevance_score=float(tweet.get("relevance_score", 0.7)),
+                        pain_point_type=pain_point_type,
                         pain_points=tweet.get("pain_points", []),
                         buying_signals=tweet.get("buying_signals", []),
                         keywords=[query],
@@ -408,6 +391,7 @@ Return a JSON response with tweets array containing:
 
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse Grok JSON response: {e}")
+            logger.debug(f"Raw content: {content[:500]}")
             # Try to extract X URLs from citations as fallback
             signals = self._extract_from_citations(citations, query)
 
