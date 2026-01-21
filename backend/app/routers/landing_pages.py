@@ -10,10 +10,9 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Form, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.config import get_settings
 from app.utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
