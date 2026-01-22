@@ -474,11 +474,36 @@ PHASE 3 - Add as needed:
 |--------|-----|----------|----------|
 | X/Twitter | Grok (xAI API) | **Primary** | Flag low confidence |
 | Google Trends | pytrends | Supplement | Continue without |
-| Keywords | DataForSEO | Supplement | Use estimates |
-| Competitors | Apify | Supplement | Continue without |
+| Keywords | DataForSEO | Supplement (Phase 1+) | Use estimates |
+| Competitors | Gumroad Scraper (in-house) | Supplement | Use -5 penalty default |
 | Reddit | PRAW | **Add when API approved** | Skip until approved |
 
 **Note**: Grok has native X search capability, making it ideal for discovering real-time pain points and requests on X/Twitter.
+
+### Gumroad Competition Scraper
+
+We build our own free scraper instead of using paid services (Apify charges $49/month).
+
+```
+GUMROAD COMPETITION SCRAPER:
+
+URL: https://gumroad.com/discover?query={keyword}
+Method: httpx + BeautifulSoup (robots.txt allows scraping except /purchases/)
+
+Data Extracted:
+├── Product count for keyword
+├── Price range ($min - $max)
+├── Average rating
+├── Review counts
+└── Seller names (to check saturation)
+
+Competition Penalty Calculation:
+├── 0 competitors: -10 pts (unvalidated market risk)
+├── 1-3 competitors: -5 pts (good - validated market)
+├── 4-7 competitors: -10 pts (crowded)
+├── 8+ competitors OR avg rating > 4.5: -20 pts (saturated)
+└── Competitors but low ratings (<3.5): -3 pts (room to improve)
+```
 
 ## 7.2 Scoring
 
@@ -494,10 +519,12 @@ Intent (0-40 points):
 ├── CPC level: 0-20 pts ($3+ CPC = high intent)
 └── Competitor sales: 0-20 pts (existing market = validation)
 
-Competition (-20 to 0):
-├── Strong competitors: -20 pts
-├── Weak competitors: -5 pts
-└── No competitors: -10 pts (unvalidated risk)
+Competition (-20 to 0) - Via Gumroad Scraper:
+├── Saturated (8+ products OR avg rating > 4.5): -20 pts
+├── Crowded (4-7 products): -10 pts
+├── Validated market (1-3 products): -5 pts
+├── No competitors: -10 pts (unvalidated risk)
+└── Low-rated competitors (<3.5 avg): -3 pts (opportunity!)
 
 THRESHOLDS:
 ├── Score >= 70: High priority
@@ -1266,6 +1293,100 @@ It's planting seeds for Phase 3+.
 │     [Create Pillar Content]                                                 │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 14B. AIO STRATEGY (AI OPTIMIZATION) - PHASE 3+
+
+## 14B.1 What is AIO?
+
+```
+AI OPTIMIZATION (AIO):
+
+Definition: Optimizing content and brand visibility for AI-powered search
+and chatbot responses (ChatGPT, Claude, Perplexity, Gemini, etc.)
+
+WHY IT MATTERS:
+├── Users increasingly ask AI assistants for product recommendations
+├── "What's the best ChatGPT prompt pack for real estate agents?"
+├── AI responses = new discovery channel (like SEO for AI)
+└── Early movers get cited as sources → brand authority
+
+PHASE 3+ TIMING:
+├── AIO is emerging - tools are new and evolving
+├── Focus on core business in Phase 0-2
+├── Add AIO optimization when you have catalog + traffic data
+└── Worth monitoring even if not actively optimizing
+```
+
+## 14B.2 AIO Tools to Evaluate (Phase 3+)
+
+```
+FREE MONITORING:
+├── Manual queries to ChatGPT/Claude/Perplexity
+│   "What are the best ChatGPT prompts for [audience]?"
+│   Track if your products/brand are mentioned
+└── Google Search Console (AI Overviews traffic)
+
+PAID TOOLS (Evaluate in Phase 3):
+├── Otterly.AI - Track brand mentions in AI responses
+├── LLMrefs.com - See which sources LLMs cite for keywords
+├── Semrush AIO - Comprehensive but expensive
+└── Writesonic/Surfer - Some AIO features in SEO tools
+
+WHAT TO TRACK:
+├── Brand mention frequency in AI responses
+├── Product recommendation inclusion
+├── Source citation when AI gives advice
+└── Competitor visibility in same queries
+```
+
+## 14B.3 AIO Best Practices
+
+```
+CONTENT OPTIMIZATION FOR AI:
+├── Clear, structured content (AI prefers organized info)
+├── Authoritative tone with citations/sources
+├── FAQ sections (match how users ask AI questions)
+├── Schema markup (helps AI understand content)
+└── Regular updates (AI prefers fresh sources)
+
+BRAND BUILDING FOR AI:
+├── Consistent brand name across all platforms
+├── Reviews and testimonials (AI cites social proof)
+├── Expert positioning (author bios, credentials)
+├── Backlinks from authoritative sites
+└── Press mentions / podcast appearances
+
+PRODUCT LISTING OPTIMIZATION:
+├── Detailed product descriptions
+├── Clear target audience specification
+├── Feature lists that match user queries
+├── Comparison content ("X vs alternatives")
+└── Use case examples
+```
+
+## 14B.4 AIO Timeline
+
+```
+PHASE 0-2: PASSIVE MONITORING
+├── Occasionally query AI assistants for your keywords
+├── Note if competitors are mentioned
+├── No active optimization (focus on core business)
+└── Save interesting findings for later
+
+PHASE 3: ACTIVE EVALUATION
+├── Sign up for 1-2 AIO tools (free trials)
+├── Establish baseline brand visibility
+├── Identify which AI assistants mention competitors
+└── Start optimizing product descriptions
+
+PHASE 3+: OPTIMIZATION
+├── Regular AIO tracking as part of monthly review
+├── Content updates to improve AI visibility
+├── Test different content structures
+└── Track correlation: AI mentions → traffic → sales
 ```
 
 ---

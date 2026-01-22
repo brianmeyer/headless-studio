@@ -137,23 +137,34 @@ class XGrokScout:
             logger.warning("X/Grok scout not configured, returning empty results")
             return []
 
+        import asyncio
+
         all_signals: list[XSignal] = []
 
-        # Build search queries
+        # Build search queries - use plain topic, let the prompt handle intent filtering
         queries = search_queries or []
         if not queries:
             for topic in topics:
-                for template in self.SEARCH_TEMPLATES[:5]:  # Use top 5 templates
-                    queries.append(template.format(topic=topic))
+                # Plain topic - the x_search tool and prompt will find relevant posts
+                queries.append(topic)
 
         try:
-            # Search and analyze for each query
-            for query in queries[:10]:  # Limit to 10 queries per run
-                signals = await self._search_with_x_tool(query, time_filter, topics)
-                all_signals.extend(signals)
+            # Run searches in PARALLEL (one per topic, max 3 concurrent)
+            semaphore = asyncio.Semaphore(3)
 
-                if len(all_signals) >= limit:
-                    break
+            async def search_with_limit(query: str) -> list[XSignal]:
+                async with semaphore:
+                    return await self._search_with_x_tool(query, time_filter, topics)
+
+            results = await asyncio.gather(
+                *[search_with_limit(q) for q in queries[:3]],  # Max 3 topics
+                return_exceptions=True,
+            )
+
+            # Collect successful results
+            for result in results:
+                if isinstance(result, list):
+                    all_signals.extend(result)
 
             # Deduplicate by tweet_id
             seen_ids = set()

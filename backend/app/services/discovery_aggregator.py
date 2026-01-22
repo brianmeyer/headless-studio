@@ -37,6 +37,7 @@ from app.models.signals import RedditSignal
 from app.services.x_scout import XGrokScout, XSignal
 from app.services.reddit_scout import RedditScout
 from app.services.trends_scout import TrendsScout
+from app.services.gumroad_scout import GumroadCompetitionScout, CompetitionData
 from app.services.scorer import OpportunityScorer
 from app.utils.supabase_client import get_supabase_client
 
@@ -69,6 +70,10 @@ class DiscoveryConfig(BaseModel):
     duplicate_lookback_days: int = Field(
         default=90,
         description="Days to look back for duplicates"
+    )
+    use_trends: bool = Field(
+        default=True,
+        description="Whether to fetch Google Trends data (can be slow/unreliable)"
     )
 
 
@@ -138,6 +143,7 @@ class DiscoveryAggregator:
         self.x_scout = XGrokScout(settings)
         self.reddit_scout = RedditScout()  # Uses get_settings() internally
         self.trends_scout = TrendsScout()
+        self.gumroad_scout = GumroadCompetitionScout()
         self.scorer = OpportunityScorer()
 
     async def run_discovery(
@@ -203,28 +209,51 @@ class DiscoveryAggregator:
 
         for topic in config.topics:
             # Filter signals relevant to this topic
+            # For X signals: use all signals since they came from topic-specific searches
+            # In the future, use LLM to cluster by distinct product opportunities
+            topic_keywords = [kw.lower() for kw in topic.split() if len(kw) > 2]
             topic_x_signals = [
                 s for s in all_x_signals
-                if topic.lower() in s.text.lower() or any(
-                    kw.lower() in s.text.lower() for kw in topic.split()
-                )
+                if any(kw in s.text.lower() for kw in topic_keywords)
             ]
+
+            # If no keyword matches, use all signals (they came from this topic's search)
+            if not topic_x_signals:
+                topic_x_signals = all_x_signals
+
             topic_reddit_signals = [
                 s for s in all_reddit_signals
-                if topic.lower() in s.post_title.lower()
+                if topic.lower() in s.post_title.lower() or any(
+                    kw in s.post_title.lower() for kw in topic_keywords
+                )
             ]
 
             if not topic_x_signals and not topic_reddit_signals:
                 continue
 
-            # === 4. Get trend data for the topic ===
+            # === 4. Get trend data for the topic (OPTIONAL - fails gracefully) ===
             trend_score = 0
-            if self.trends_scout.is_available:
+            if config.use_trends and self.trends_scout.is_available:
                 try:
-                    trend_data = self.trends_scout.analyze_keyword(topic)
+                    # Only fetch interest score (1 API call), skip related queries
+                    trend_data = self.trends_scout.analyze_keyword(topic, full_analysis=False)
                     trend_score = trend_data.interest_score
+                    if trend_score > 0:
+                        logger.info(f"Trends score for '{topic}': {trend_score}")
                 except Exception as e:
-                    logger.warning(f"Trends lookup failed for {topic}: {e}")
+                    # Trends failing should NEVER block discovery
+                    logger.warning(f"Trends lookup failed for {topic} (non-blocking): {e}")
+
+            # === 4.5. Get Gumroad competition data ===
+            competition_data: CompetitionData | None = None
+            try:
+                competition_data = await self.gumroad_scout.search_competitors(topic)
+                logger.info(
+                    f"Gumroad competition for '{topic}': {competition_data.competition_level} "
+                    f"({competition_data.product_count} products)"
+                )
+            except Exception as e:
+                logger.warning(f"Gumroad lookup failed for {topic} (non-blocking): {e}")
 
             # === 5. Score the signals ===
             score_result = self.scorer.score_unified_signals(
@@ -232,6 +261,7 @@ class DiscoveryAggregator:
                 reddit_signals=topic_reddit_signals,
                 trend_score=trend_score,
                 primary_keyword=topic,
+                competition_data=competition_data,
             )
 
             # Create opportunity object
@@ -377,14 +407,14 @@ class DiscoveryAggregator:
                 limit=25,
             )
 
-        # Get trend
+        # Get trend (optional, fails gracefully)
         trend_score = 0
         if self.trends_scout.is_available:
             try:
-                trend_data = self.trends_scout.analyze_keyword(topic)
+                trend_data = self.trends_scout.analyze_keyword(topic, full_analysis=False)
                 trend_score = trend_data.interest_score
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Trends unavailable for quick_search: {e}")
 
         # Score
         score_result = self.scorer.score_unified_signals(

@@ -83,36 +83,22 @@ headless-studio/
 ## Phase 0.1: Project Setup
 
 ### Task 0.1.1: Initialize Repository
-- [ ] Create GitHub repo `headless-studio`
-- [ ] Add `.gitignore` (Python, Node, environment files)
-- [ ] Add `README.md` with project description
-- [ ] Add `docs/` folder with Master Plan
-- [ ] Add this implementation guide
+- [x] Create GitHub repo `headless-studio`
+- [x] Add `.gitignore` (Python, Node, environment files)
+- [x] Add `README.md` with project description
+- [x] Add `docs/` folder with Master Plan
+- [x] Add this implementation guide
 
-**Done when**: Repo exists with docs folder containing both documents.
+**Done when**: Repo exists with docs folder containing both documents. ✅ COMPLETE
 
 ### Task 0.1.2: Create Backend Scaffold
-- [ ] Create `backend/` folder structure
-- [ ] Create `requirements.txt` with initial dependencies:
-  ```
-  fastapi==0.109.0
-  uvicorn==0.27.0
-  pydantic==2.5.3
-  pydantic-settings==2.1.0
-  httpx==0.26.0
-  supabase==2.3.0
-  openai==1.12.0        # For xAI/Grok API (OpenAI-compatible)
-  python-dotenv==1.0.0
-  pytrends==4.9.2       # For Google Trends
-  jinja2==3.1.2         # For landing page HTML templates
-  python-multipart==0.0.6  # For form handling
-  # praw==7.7.1         # Add when Reddit API approved
-  ```
-- [ ] Create `backend/app/main.py` with basic FastAPI app
-- [ ] Create `backend/app/config.py` with settings class
-- [ ] Create `.env.example` with all required variables
+- [x] Create `backend/` folder structure
+- [x] Create `requirements.txt` with initial dependencies
+- [x] Create `backend/app/main.py` with basic FastAPI app
+- [x] Create `backend/app/config.py` with settings class
+- [x] Create `.env.example` with all required variables
 
-**Done when**: `uvicorn app.main:app --reload` runs without errors.
+**Done when**: `uvicorn app.main:app --reload` runs without errors. ✅ COMPLETE
 
 ### Task 0.1.3: Create Supabase Schema
 - [x] Create `supabase/migrations/001_initial_schema.sql`
@@ -125,99 +111,37 @@ headless-studio/
 **Done when**: SQL file exists and is valid (can paste into Supabase SQL editor).
 
 ### Task 0.1.4: Environment Configuration
-- [ ] Document all required environment variables in `.env.example`:
-  ```
-  # Required
-  XAI_API_KEY=          # From console.x.ai (for Grok + X search)
-  GROQ_API_KEY=
-  GOOGLE_AI_API_KEY=
-  SUPABASE_URL=
-  SUPABASE_ANON_KEY=
-  SUPABASE_SERVICE_KEY=
+- [x] Document all required environment variables in `.env.example`
+- [x] Create `backend/app/config.py` that loads these with pydantic-settings
+- [x] Add validation for required vs optional keys
+- [x] Add `reddit_configured` property that checks if Reddit credentials are present
 
-  # Add when approved
-  REDDIT_CLIENT_ID=
-  REDDIT_CLIENT_SECRET=
-  REDDIT_USER_AGENT=
-
-  # Optional (Phase 1+)
-  REDDIT_ADS_CLIENT_ID=
-  REDDIT_ADS_CLIENT_SECRET=
-  GUMROAD_ACCESS_TOKEN=
-  MAILERLITE_API_KEY=
-  ```
-- [ ] Create `backend/app/config.py` that loads these with pydantic-settings
-- [ ] Add validation for required vs optional keys
-- [ ] Add `reddit_configured` property that checks if Reddit credentials are present
-
-**Done when**: App loads config without errors when `.env` has required keys.
+**Done when**: App loads config without errors when `.env` has required keys. ✅ COMPLETE
 
 ---
 
 ## Phase 0.2: Discovery - X/Grok Scout (Primary)
 
 ### Task 0.2.1: X/Grok Scout Service
-- [ ] Create `backend/app/services/x_scout.py`
-- [ ] Implement `XGrokScout` class using xAI API:
-  ```python
-  class XGrokScout:
-      def __init__(self, config: Settings):
-          # Initialize xAI client with XAI_API_KEY
-          # Grok has native X search capability
+- [x] Create `backend/app/services/x_scout.py`
+- [x] Implement `XGrokScout` class using xAI Responses API with x_search tool
+- [x] Create `backend/app/models/signals.py` with `XSignal` model
+- [x] Handle xAI API rate limits gracefully
+- [x] Add logging for debugging
+- [x] Added target customer profile to search prompts (non-technical professionals)
+- [x] Parallel query execution for speed
 
-      async def search_x(
-          self,
-          topics: list[str],
-          search_queries: list[str] | None = None,
-          time_filter: str = "week",
-          limit: int = 100
-      ) -> list[XSignal]:
-          # Use Grok to search X for pain points, requests, frustrations
-          # Search queries like: "{topic} need help", "{topic} frustrated",
-          # "{topic} wish there was", "{topic} looking for"
-          # Return structured signals
+**Done when**: Can call `x_scout.search_x(["chatgpt prompts", "AI tools"])` and get results. ✅ COMPLETE
 
-      async def analyze_signals(
-          self,
-          raw_tweets: list[dict]
-      ) -> list[XSignal]:
-          # Use Grok to analyze and score relevance
-  ```
-- [ ] Create `backend/app/models/signals.py` with `XSignal` model:
-  ```python
-  class XSignal(BaseModel):
-      tweet_id: str
-      text: str
-      author_username: str
-      author_followers: int | None
-      engagement_score: int  # likes + retweets + replies
-      created_at: datetime
-      url: str
-      relevance_score: float  # How relevant to product opportunity
-      pain_point_type: str | None  # "request", "frustration", "question"
-  ```
-- [ ] Handle xAI API rate limits gracefully
-- [ ] Add logging for debugging
-
-**Done when**: Can call `x_scout.search_x(["chatgpt prompts", "AI tools"])` and get results.
+**Note**: xAI API response time is ~30s per query. This is the main latency bottleneck.
 
 ### Task 0.2.2: X/Grok Scout API Endpoint
-- [ ] Create `backend/app/routers/discovery.py`
-- [ ] Add endpoint `POST /api/discovery/x`:
-  ```python
-  @router.post("/x")
-  async def search_x(
-      topics: list[str],
-      search_queries: list[str] | None = None,
-      time_filter: str = "week"
-  ) -> XSearchResponse:
-      # Call XGrokScout
-      # Return signals
-  ```
-- [ ] Add error handling for xAI API failures
-- [ ] Add response model
+- [x] Create `backend/app/routers/discovery.py`
+- [x] Add endpoint `POST /api/discovery/x`
+- [x] Add error handling for xAI API failures
+- [x] Add response model
 
-**Done when**: Can hit endpoint and get X signals back.
+**Done when**: Can hit endpoint and get X signals back. ✅ COMPLETE
 
 ### Task 0.2.3: X/Grok Scout Tests
 - [ ] Create `backend/tests/test_x_scout.py`
@@ -226,7 +150,7 @@ headless-studio/
 - [ ] Test: Invalid topic handled
 - [ ] Test: Rate limit behavior
 
-**Done when**: All tests pass.
+**Status**: SKIPPED for now - manual testing performed. Unit tests can be added later.
 
 ---
 
@@ -256,9 +180,9 @@ headless-studio/
 
 **Done when**: Can get trend data, or gracefully returns empty if API fails.
 
-### Task 0.3.2: Keyword Scout (DataForSEO or Fallback)
+### Task 0.3.2: Keyword Scout (DataForSEO or Fallback) - PHASE 1+
 - [ ] Create `backend/app/services/keyword_scout.py`
-- [ ] Primary: DataForSEO API (if key provided)
+- [ ] Primary: DataForSEO API (if key provided) - $50 minimum, add in Phase 1+
 - [ ] Fallback: Hardcoded estimates based on patterns
 - [ ] Implement:
   ```python
@@ -287,7 +211,103 @@ headless-studio/
 
 **Done when**: Returns keyword data (real or estimated).
 
-### Task 0.3.3: Discovery Aggregator
+### Task 0.3.3: Gumroad Competition Scout (FREE - In-House Scraper)
+- [ ] Create `backend/app/services/gumroad_scout.py`
+- [ ] Scrape Gumroad's public discover page (robots.txt allows, only /purchases/ blocked)
+- [ ] Implement:
+  ```python
+  from urllib.parse import quote
+  import httpx
+  from bs4 import BeautifulSoup
+  from pydantic import BaseModel
+
+  class GumroadProduct(BaseModel):
+      title: str
+      price_cents: int | None
+      seller_name: str
+      rating: float | None
+      review_count: int | None
+      url: str
+
+  class CompetitionData(BaseModel):
+      keyword: str
+      product_count: int
+      products: list[GumroadProduct]
+      price_range: tuple[int, int] | None  # (min_cents, max_cents)
+      avg_rating: float | None
+      competition_level: str  # "none", "low", "medium", "high", "saturated"
+      competition_penalty: int  # -20 to 0
+
+  class GumroadCompetitionScout:
+      async def search_competitors(
+          self,
+          keyword: str,
+          limit: int = 20
+      ) -> CompetitionData:
+          """
+          Scrape Gumroad discover for competitor products.
+
+          URL: https://gumroad.com/discover?query={keyword}
+          """
+          url = f"https://gumroad.com/discover?query={quote(keyword)}"
+
+          async with httpx.AsyncClient() as client:
+              response = await client.get(url, headers={
+                  "User-Agent": "HeadlessStudio/1.0 (market research)"
+              })
+              response.raise_for_status()
+
+          soup = BeautifulSoup(response.text, "html.parser")
+          products = self._parse_products(soup)
+
+          return self._analyze_competition(keyword, products)
+
+      def _parse_products(self, soup: BeautifulSoup) -> list[GumroadProduct]:
+          # Parse product cards from HTML
+          # Extract: title, price, seller, rating, reviews, url
+          pass
+
+      def _analyze_competition(
+          self,
+          keyword: str,
+          products: list[GumroadProduct]
+      ) -> CompetitionData:
+          count = len(products)
+
+          # Calculate competition level and penalty
+          if count == 0:
+              level, penalty = "none", -10  # Unvalidated risk
+          elif count <= 3:
+              level, penalty = "low", -5   # Validated market
+          elif count <= 7:
+              level, penalty = "medium", -10  # Crowded
+          else:
+              level, penalty = "saturated", -20
+
+          # Adjust for quality opportunity
+          avg_rating = self._calc_avg_rating(products)
+          if avg_rating and avg_rating < 3.5 and count > 0:
+              level, penalty = "low_quality", -3  # Room to improve!
+          elif avg_rating and avg_rating > 4.5 and count > 3:
+              level, penalty = "saturated", -20  # Hard to beat
+
+          return CompetitionData(
+              keyword=keyword,
+              product_count=count,
+              products=products,
+              price_range=self._calc_price_range(products),
+              avg_rating=avg_rating,
+              competition_level=level,
+              competition_penalty=penalty
+          )
+  ```
+- [ ] Add to requirements.txt: `beautifulsoup4==4.12.2`
+- [ ] Handle rate limiting gracefully (add delays between requests)
+- [ ] Cache results for 24 hours to avoid excessive scraping
+
+**Done when**: Can call `gumroad_scout.search_competitors("chatgpt prompts real estate")` and get competition data.
+
+### Task 0.3.4: Discovery Aggregator
 - [ ] Create `backend/app/services/discovery_aggregator.py`
 - [ ] Combines all scouts into one discovery run:
   ```python
@@ -329,22 +349,32 @@ headless-studio/
 - [ ] Implement scoring algorithm from Master Plan Section 7.2:
   ```python
   class OpportunityScorer:
-      def score_opportunity(
+      def __init__(self, gumroad_scout: GumroadCompetitionScout):
+          self.gumroad_scout = gumroad_scout
+
+      async def score_opportunity(
           self,
           raw: RawOpportunity
       ) -> ScoredOpportunity:
           demand_score = self._calculate_demand(raw)  # 0-50
           intent_score = self._calculate_intent(raw)   # 0-40
-          competition_penalty = self._calculate_competition(raw)  # -20 to 0
-          
+
+          # Use real Gumroad data for competition penalty
+          competition_data = await self.gumroad_scout.search_competitors(
+              raw.primary_keyword
+          )
+          competition_penalty = competition_data.competition_penalty  # -20 to 0
+
           total = demand_score + intent_score + competition_penalty
           confidence = self._determine_confidence(raw)
-          
+
           return ScoredOpportunity(
               ...raw,
               opportunity_score=total,
               demand_score=demand_score,
               intent_score=intent_score,
+              competition_penalty=competition_penalty,
+              competition_data=competition_data,  # Store for Gate 1 display
               confidence=confidence
           )
   ```
@@ -353,10 +383,16 @@ headless-studio/
   - Google Trends: 0-10 pts
   - Reddit mentions: 0-10 pts (when available)
 - [ ] Implement intent scoring (CPC, competitor presence)
-- [ ] Implement competition penalty
+- [ ] Competition penalty from Gumroad scout (see Task 0.3.3):
+  - Saturated (8+ products OR avg rating > 4.5): -20 pts
+  - Crowded (4-7 products): -10 pts
+  - Validated market (1-3 products): -5 pts
+  - No competitors: -10 pts (unvalidated risk)
+  - Low-rated competitors (<3.5 avg): -3 pts (opportunity!)
 - [ ] Implement confidence level (based on data completeness - higher if X data available)
+- [ ] Store competition_data for display in Gate 1 UI (shows competitors, prices, ratings)
 
-**Done when**: Can score opportunities, scores match expected ranges.
+**Done when**: Can score opportunities with real Gumroad competition data, scores match expected ranges.
 
 ### Task 0.4.2: Duplicate Checker
 - [ ] Create `backend/app/services/duplicate_checker.py`
