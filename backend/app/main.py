@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.routers import discovery, landing_pages
+from app.routers import discovery, landing_pages, validation, gates
 
 # Configure logging
 settings = get_settings()
@@ -128,12 +128,10 @@ app.include_router(landing_pages.router, tags=["Landing Pages"])
 # app.include_router(scoring.router, prefix="/api/scoring", tags=["Scoring"])
 
 # Phase 0.7: Validation
-# from app.routers import validation
-# app.include_router(validation.router, prefix="/api/validation", tags=["Validation"])
+app.include_router(validation.router, prefix="/api/validation", tags=["Validation"])
 
 # Phase 0.8: Gates
-# from app.routers import gates
-# app.include_router(gates.router, prefix="/api/gates", tags=["Gates"])
+app.include_router(gates.router, prefix="/api/gates", tags=["Gates"])
 
 # Phase 1: Manufacturing
 # from app.routers import manufacturing
