@@ -17,7 +17,7 @@ USER_AGENT = "HeadlessStudio/1.0 (read-only research)"
 TIMEOUT_SEC = 12.0
 GUMROAD_PRODUCT_PAGE_CAP = 8
 SIGNAL_TEXT_CAP = 1200
-REDDIT_SEARCH = "https://www.reddit.com/search.json?q={q}&limit=25&sort=relevance&t=year&raw_json=1"
+REDDIT_SEARCH = "https://www.reddit.com/search.json?q={q}&limit=25&sort=new&raw_json=1"
 REDDIT_PROPERTY = (
     "https://www.reddit.com/r/PropertyManagement/search.json"
     "?q={q}&restrict_sr=1&limit=25&sort=new&raw_json=1"
@@ -121,7 +121,7 @@ def parse_reddit_listing(body: str) -> list[Signal]:
                 pain_points=_pain_from_text(text),
                 buying_signals=_buying_from_text(text),
                 author=str(data.get("author") or ""),
-                engagement=int(data.get("score") or data.get("num_comments") or 0),
+                engagement=int(data.get("score") or 0),
                 relevance=0.75 if has_pain_intent(text) else 0.5,
             )
         )

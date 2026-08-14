@@ -1,4 +1,4 @@
-"""Score one promise from scouted signals. Competition is a default penalty; this slice does not scrape to change it."""
+"""Score one promise from scouted signals. Competition stays a default penalty."""
 
 from __future__ import annotations
 
