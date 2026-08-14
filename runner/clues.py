@@ -86,7 +86,7 @@ def extract_clues(signals: list[Signal] | tuple[Signal, ...]) -> list[str]:
             return
         if is_hype_only(text):
             return
-        if not (has_pain_intent(text) or len(text) >= 12):
+        if not has_pain_intent(text):
             return
         key = text.lower()
         if key in seen:
@@ -95,6 +95,8 @@ def extract_clues(signals: list[Signal] | tuple[Signal, ...]) -> list[str]:
         clues.append(text)
 
     for signal in signals:
+        if signal.fixture:
+            continue
         for item in (*signal.pain_points, *signal.buying_signals, *signal.questions):
             add(item)
         if has_pain_intent(signal.text):

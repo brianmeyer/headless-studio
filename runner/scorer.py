@@ -6,8 +6,14 @@ from runner.clues import extract_clues, is_hype_only
 from runner.models import Promise, Score, Signal
 
 
+def _has_source_url(signal: Signal) -> bool:
+    url = (signal.url or "").strip()
+    return url.startswith("http://") or url.startswith("https://")
+
+
 def sourced_signals(signals: list[Signal] | tuple[Signal, ...]) -> list[Signal]:
-    return [s for s in signals if not s.fixture]
+    """Non-fixture rows with a source URL. Fixture or URL-less rows are not sourced."""
+    return [s for s in signals if (not s.fixture) and _has_source_url(s)]
 
 
 def score_promise(
@@ -21,7 +27,8 @@ def score_promise(
     scrape Gumroad. Confidence requires sourced (non-fixture) signals.
     """
     _ = promise
-    if not signals:
+    sourced = sourced_signals(signals)
+    if not sourced:
         return Score(
             total=0,
             demand=0,
@@ -31,12 +38,11 @@ def score_promise(
             source_urls=(),
         )
 
-    demand = _demand(signals)
-    intent = _intent(signals)
+    demand = _demand(sourced)
+    intent = _intent(sourced)
     competition = -5.0
     total = max(0.0, min(100.0, demand + intent + competition))
 
-    sourced = sourced_signals(signals)
     source_urls = tuple(s.url for s in sourced if s.url)
     if len(sourced) >= 10 and total >= 70:
         confidence = "high"

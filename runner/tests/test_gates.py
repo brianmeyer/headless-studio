@@ -5,7 +5,7 @@ from __future__ import annotations
 from runner.draft import draft_promise
 from runner.fixtures import fixture_signals, sourced_hit_signals
 from runner.gates import evaluate_gates, promise_matches_sources
-from runner.models import Promise, Score
+from runner.models import Promise, Score, Signal
 from runner.scorer import score_promise
 
 
@@ -67,3 +67,66 @@ def test_incoherent_promise_fails_gate_four():
     assert gate is not None
     assert gate.passed is False
     assert "overlap" in detail or "not" in detail
+
+
+def _neutral_sourced(n: int = 5) -> list[Signal]:
+    return [
+        Signal(
+            id=f"n-{i}",
+            source="x",
+            text="The weather is pleasant this afternoon in Cleveland.",
+            url=f"https://x.com/example/status/{2000 + i}",
+            fixture=False,
+            pain_points=("pleasant weather notes",),
+            buying_signals=("afternoon update",),
+            engagement=80,
+            relevance=0.9,
+        )
+        for i in range(n)
+    ]
+
+
+def test_url_less_non_fixture_is_not_sourced():
+    signals = [
+        Signal(
+            id=f"u-{i}",
+            source="x",
+            text="Tired of rewriting listing copy from scratch every week.",
+            url="",
+            fixture=False,
+            pain_points=("rewriting listing copy from scratch",),
+            engagement=50,
+            relevance=0.8,
+        )
+        for i in range(5)
+    ]
+    promise = draft_promise(signals, "chatgpt prompts for property managers")
+    score = score_promise(signals, promise)
+    report = evaluate_gates(signals, promise, score)
+    sourced = report.by_name("sourced_signals")
+    assert sourced is not None
+    assert sourced.passed is False
+    assert not report.all_passed
+
+
+def test_neutral_signals_cannot_pass_silence_gates():
+    signals = _neutral_sourced()
+    promise = draft_promise(signals, "chatgpt prompts for property managers")
+    score = score_promise(signals, promise)
+    report = evaluate_gates(signals, promise, score)
+    clues = report.by_name("pain_intent_clues")
+    assert clues is not None
+    assert clues.passed is False
+    assert not report.all_passed
+
+
+def test_fixture_clues_do_not_count_in_mixed_run():
+    """Fixtures must not inflate gate 2 when sourced rows have no pain/intent."""
+    signals = fixture_signals() + _neutral_sourced()
+    promise = draft_promise(signals, "chatgpt prompts for property managers")
+    score = score_promise(signals, promise)
+    report = evaluate_gates(signals, promise, score)
+    clues = report.by_name("pain_intent_clues")
+    assert clues is not None
+    assert clues.passed is False
+    assert not report.all_passed

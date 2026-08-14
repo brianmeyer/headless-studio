@@ -76,9 +76,9 @@ def evaluate_gates(
     score: Score,
 ) -> GateReport:
     sourced = sourced_signals(signals)
-    clues = extract_clues(signals)
-    # Gate 4 reads sourced text when any sourced rows exist.
-    coherent, coherent_detail = promise_matches_sources(promise, sourced or list(signals))
+    clues = extract_clues(sourced)
+    # Gate 4 reads sourced text only. Fixtures cannot manufacture coherence.
+    coherent, coherent_detail = promise_matches_sources(promise, sourced)
 
     sourced_ok = len(sourced) >= 5
     clues_ok = len(clues) >= 3

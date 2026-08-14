@@ -10,7 +10,7 @@ from runner.fixtures import DEFAULT_TOPIC
 from runner.gates import evaluate_gates
 from runner.models import RunResult, Signal
 from runner.receipt import write_outputs
-from runner.scorer import score_promise
+from runner.scorer import score_promise, sourced_signals
 from runner.scout import environment_name, scout
 
 
@@ -30,7 +30,7 @@ def run(
     promise = draft_promise(observed, topic)
     score = score_promise(observed, promise)
     gates = evaluate_gates(observed, promise, score)
-    clues = tuple(extract_clues(observed))
+    clues = tuple(extract_clues(sourced_signals(observed)))
     verdict = "hit" if gates.all_passed else "miss"
 
     receipt_path = Path(out_path) if out_path else Path("receipts") / "latest.md"

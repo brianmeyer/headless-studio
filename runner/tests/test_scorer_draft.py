@@ -69,3 +69,26 @@ def test_draft_uses_topic_when_signals_are_thin():
     assert "notion" in promise.title.lower() or "coach" in promise.title.lower()
     assert promise.product_type in {"template_pack", "guide"}
     assert promise.title.startswith("For ")
+
+
+def test_long_neutral_text_is_not_a_clue():
+    """Gate 2 requires pain/intent, not merely 12+ non-hype characters."""
+    neutral = Signal(
+        id="neutral",
+        source="x",
+        text="The weather is pleasant this afternoon in Cleveland.",
+        url="https://x.com/example/status/9",
+        fixture=False,
+        pain_points=("pleasant weather notes",),
+        buying_signals=("afternoon update",),
+    )
+    assert extract_clues([neutral]) == []
+
+
+def test_fixtures_do_not_inflate_score_or_clues():
+    sourced = sourced_hit_signals()[:1]
+    mixed = list(fixture_signals()) + sourced
+    score_mixed = score_promise(mixed)
+    score_sourced = score_promise(sourced)
+    assert score_mixed.total == score_sourced.total
+    assert extract_clues(mixed) == extract_clues(sourced)
