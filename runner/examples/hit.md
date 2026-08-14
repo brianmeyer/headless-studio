@@ -88,3 +88,12 @@ All four gates passed. Local static mock written. Nothing was published.
 ## Static mock
 
 Written to `receipts/mocks/chatgpt-prompts-property-managers-prompt-pack/index.html` (local only, not published).
+
+## Brian Red gates (not this slice)
+
+| Gate | Status |
+| --- | --- |
+| first post | NOT DONE |
+| listing | NOT DONE |
+| dollar | NOT DONE |
+| buyer conversation | NOT DONE |

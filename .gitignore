@@ -65,3 +65,7 @@ supabase/.temp/
 receipts/latest.md
 receipts/run-*.md
 receipts/mocks/
+
+# Green runner outputs (keep .gitkeep)
+green/out/*
+!green/out/.gitkeep

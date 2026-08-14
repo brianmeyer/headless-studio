@@ -2,6 +2,20 @@
 
 Autonomous AI-powered digital product factory.
 
+## Green runner (Vera locked)
+
+One-shot scout → one product promise → score → local static mock + markdown receipt → exit.
+
+```bash
+python -m green
+python -m green --fixtures
+```
+
+Silence: writes `miss` unless all four gates pass. No secrets in development. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
+
+Brian Red gates (not this slice): first post, listing, dollar, buyer conversation.
+
+
 ## Quick Start
 
 ### 1. Clone and Setup

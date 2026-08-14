@@ -90,6 +90,15 @@ def render_receipt(result: RunResult) -> str:
 ## Static mock
 
 {mock_line}
+
+## Brian Red gates (not this slice)
+
+| Gate | Status |
+| --- | --- |
+| first post | NOT DONE |
+| listing | NOT DONE |
+| dollar | NOT DONE |
+| buyer conversation | NOT DONE |
 """
 
 

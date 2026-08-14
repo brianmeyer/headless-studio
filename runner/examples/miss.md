@@ -58,3 +58,12 @@ Scouted one product promise and stopped. Silence unless all four gates pass.
 ## Static mock
 
 Not written. Misses do not get a mock.
+
+## Brian Red gates (not this slice)
+
+| Gate | Status |
+| --- | --- |
+| first post | NOT DONE |
+| listing | NOT DONE |
+| dollar | NOT DONE |
+| buyer conversation | NOT DONE |

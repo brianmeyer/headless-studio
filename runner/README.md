@@ -9,6 +9,7 @@ It does **not** boot FastAPI, SQLite, Supabase, n8n, Railway, Gumroad, ads, or s
 From the repo root, with no env keys:
 
 ```bash
+python -m green
 ENVIRONMENT=development python -m runner
 ```
 

@@ -24,7 +24,14 @@ def main(argv: list[str] | None = None) -> int:
         default="receipts/latest.md",
         help="Markdown receipt path (default: receipts/latest.md)",
     )
+    parser.add_argument(
+        "--fixtures",
+        action="store_true",
+        help="Force fixture scout (development default when APIs/keys are missing).",
+    )
     args = parser.parse_args(argv)
+    # --fixtures is the only scout this slice has; flag documents the contract.
+    _ = args.fixtures
 
     result = run(topic=args.topic, out_path=Path(args.out))
     print(result.verdict)
