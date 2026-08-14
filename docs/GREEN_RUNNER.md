@@ -25,6 +25,8 @@ python3 -m green --fixtures
 python3 -m green --out green/out/manual/RECEIPT.md
 ```
 
+`--fixtures` (or `GREEN_FORCE_FIXTURES=1`) skips public HTTP and uses fixture rows (still a miss).
+
 Equivalent entry (same pipeline):
 
 ```bash
@@ -35,12 +37,32 @@ ENVIRONMENT=development python3 -m runner --topic "chatgpt prompts for property 
 ## Scout path (keys missing)
 
 1. Try public/unauth HTTP: Reddit search JSON and/or the existing Gumroad discover scrape
-2. If that yields zero live rows, fall back to fixtures
-3. Still **miss** unless the four gates pass on **sourced** rows
-4. Fixture rows are marked `fixture=true` and **never** count as sourced
-5. `--fixtures` skips HTTP and uses fixture rows (still a miss)
+2. Enrich each Gumroad discover row by GETting its public product page (cap 8 pages) and reading
+   buyer-facing copy: Inertia `data-page` `props.product.summary` + HTML-stripped
+   `description_html`, else `<meta name="description">`, `og:description`, or schema.org
+   `Product.description`
+3. If that yields zero live rows, fall back to fixtures
+4. Still **miss** unless the four gates pass on **sourced** rows
+5. Fixture rows are marked `fixture=true` and **never** count as sourced
+6. `--fixtures` / `GREEN_FORCE_FIXTURES=1` skips HTTP and uses fixture rows (still a miss)
 
 Live rows are returned alone. Fixtures are not mixed in to inflate counts. No sales mock on miss.
+
+### Product-page enrich
+
+Reddit keys stay **optional**. Gate 2 (≥3 pain/intent clues) can pass from Gumroad product copy
+alone, because product descriptions frequently contain the same pain/intent phrases the Reddit path
+looks for (`tired of`, `from scratch`, `manual`, `copy-paste`, `pay for`, `looking for`, `overwhelm`).
+
+Rules the enrich step keeps:
+
+- Pain is **quoted verbatim** from sentences that themselves trip `has_pain_intent`. Nothing is
+  invented, paraphrased, or inferred.
+- Hype-only copy ("game changer", "revolutionary", "10x viral must-have") yields **no** clues.
+- A product GET that 403s, times out, or has no readable description leaves its discover row
+  untouched — sourced, but with empty `pain_points`. The row is never dropped.
+- `relevance` rises to `0.75` only when real pain/intent was found; otherwise it stays `0.5`.
+- Scout notes record every product GET status and how many pages yielded pain/intent.
 
 `python3 -m green` writes `green/out/<timestamp>/RECEIPT.md` (and `.json`) unless `--out` is set.
 `python3 -m runner` writes `receipts/latest.md` (and `.json`) unless `--out` is set.

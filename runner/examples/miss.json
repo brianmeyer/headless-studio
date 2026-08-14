@@ -4,10 +4,10 @@
   "ping": false,
   "topic": "chatgpt prompts for property managers",
   "environment": "development",
-  "written": "2026-08-14T23:23:22Z",
+  "written": "2026-08-14T23:37:30Z",
   "how_to_run": "cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green",
   "scout_notes": [
-    "scout: --fixtures (skipped public HTTP)",
+    "scout: --fixtures / GREEN_FORCE_FIXTURES=1 (skipped public HTTP)",
     "fixtures never count as sourced"
   ],
   "signal_counts": {

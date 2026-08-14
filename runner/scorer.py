@@ -1,4 +1,4 @@
-"""Score one promise from scouted signals. No Gumroad HTTP."""
+"""Score one promise from scouted signals. Competition is a default penalty; this slice does not scrape to change it."""
 
 from __future__ import annotations
 

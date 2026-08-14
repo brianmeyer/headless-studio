@@ -8,7 +8,7 @@ One-shot scout → one buyer-facing promise → score → local markdown + JSON 
 cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green
 ```
 
-Keys missing: public Reddit / Gumroad discover HTTP, then fixtures, still **miss**. Fixtures never count as sourced. Four gates. No mock on miss. Pepper crons that command Monday 8:15am ET. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
+Keys missing: public Reddit / Gumroad discover HTTP, then fixtures, still **miss**. Gumroad discover rows are enriched with public product-page copy (cap 8 pages) so the pain/intent gate can pass without Reddit keys — Reddit keys stay optional. Fixtures never count as sourced. Four gates. No mock on miss. Pepper crons that command Monday 8:15am ET. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
 
 Still Red (not this slice): first post, listing, dollar, buyer conversation.
 

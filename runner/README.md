@@ -17,7 +17,9 @@ Writes (via `python3 -m runner`):
 - `receipts/latest.md`
 - `receipts/latest.json`
 
-`--fixtures` skips HTTP. Missing keys are fine: try public Reddit JSON and Gumroad discover, then fixtures. Fixture rows do not count as sourced.
+`--fixtures` (or `GREEN_FORCE_FIXTURES=1`) skips HTTP. Missing keys are fine: the default tries public Reddit JSON and Gumroad discover first, then falls back to fixtures. Fixture rows do not count as sourced.
+
+Gumroad discover rows are enriched by GETting each public product page (cap 8) and reading buyer-facing copy — Inertia `data-page` summary/`description_html`, else `<meta name="description">`, `og:description`, or schema.org `Product.description`. Pain is quoted verbatim from sentences that trip the existing pain/intent patterns, so **Reddit keys stay optional** and gate 2 can pass from product copy alone. Hype-only copy yields nothing; a failed product GET keeps the discover row sourced with empty pain.
 
 ## Paper-win bar
 

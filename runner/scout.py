@@ -30,6 +30,13 @@ def live_keys_present() -> bool:
     )
 
 
+def _force_fixtures(use_fixtures: bool) -> bool:
+    """--fixtures, GREEN_FORCE_FIXTURES=1, or explicit force_fixtures all skip HTTP."""
+    if use_fixtures:
+        return True
+    return os.environ.get("GREEN_FORCE_FIXTURES", "").strip() == "1"
+
+
 def scout(topic: str = DEFAULT_TOPIC, use_fixtures: bool = False) -> ScoutOutcome:
     """
     One-shot read-only scout.
@@ -37,13 +44,15 @@ def scout(topic: str = DEFAULT_TOPIC, use_fixtures: bool = False) -> ScoutOutcom
     Keys missing: try public/unauth HTTP, then fixtures, still miss.
     Fixture rows are marked fixture=True and never count as sourced.
     Live rows (if any) are returned alone — fixtures are not mixed in.
+
+    Force fixtures via --fixtures, GREEN_FORCE_FIXTURES=1, or force_fixtures.
     """
     _ = live_keys_present()
-    if use_fixtures:
+    if _force_fixtures(use_fixtures):
         return ScoutOutcome(
             signals=fixture_signals(topic),
             notes=[
-                "scout: --fixtures (skipped public HTTP)",
+                "scout: --fixtures / GREEN_FORCE_FIXTURES=1 (skipped public HTTP)",
                 "fixtures never count as sourced",
             ],
             used_fixtures=True,

@@ -132,7 +132,7 @@ def render_receipt(result: RunResult) -> str:
 - **total:** {result.score.total}
 - **demand:** {result.score.demand}
 - **intent:** {result.score.intent}
-- **competition:** {result.score.competition}
+- **competition:** {result.score.competition} (default penalty)
 - **confidence:** {result.score.confidence}
 
 ## Pain / intent clues

@@ -9,14 +9,14 @@ Paper-win miss. Scouted one buyer-facing promise and stopped. No ping. Silence u
 - **ping:** no
 - **topic:** chatgpt prompts for property managers
 - **environment:** development
-- **written:** 2026-08-14T23:23:22Z
+- **written:** 2026-08-14T23:37:30Z
 - **how to run:** `cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green`
 - **live signals:** 0
 - **fixture signals:** 4 (never sourced)
 
 ## Scout
 
-- scout: --fixtures (skipped public HTTP)
+- scout: --fixtures / GREEN_FORCE_FIXTURES=1 (skipped public HTTP)
 - fixtures never count as sourced
 
 ## Buyer-facing promise (draft only)
@@ -42,7 +42,7 @@ One prompt pack so property managers can handle rewriting listing copy from scra
 - **total:** 0
 - **demand:** 0
 - **intent:** 0
-- **competition:** 0
+- **competition:** 0 (default penalty)
 - **confidence:** low
 
 ## Pain / intent clues

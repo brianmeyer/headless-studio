@@ -4,17 +4,20 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import replace
 from html import unescape
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from runner.clues import has_pain_intent
+from runner.clues import has_pain_intent, is_hype_only
 from runner.models import Signal
 
 USER_AGENT = "HeadlessStudio/1.0 (read-only research)"
 TIMEOUT_SEC = 12.0
-REDDIT_SEARCH = "https://www.reddit.com/search.json?q={q}&limit=25&sort=new&raw_json=1"
+GUMROAD_PRODUCT_PAGE_CAP = 8
+SIGNAL_TEXT_CAP = 1200
+REDDIT_SEARCH = "https://www.reddit.com/search.json?q={q}&limit=25&sort=relevance&t=year&raw_json=1"
 REDDIT_PROPERTY = (
     "https://www.reddit.com/r/PropertyManagement/search.json"
     "?q={q}&restrict_sr=1&limit=25&sort=new&raw_json=1"
@@ -105,7 +108,7 @@ def parse_reddit_listing(body: str) -> list[Signal]:
                 pain_points=_pain_from_text(text),
                 buying_signals=_buying_from_text(text),
                 author=str(data.get("author") or ""),
-                engagement=int(data.get("score") or 0),
+                engagement=int(data.get("score") or data.get("num_comments") or 0),
                 relevance=0.75 if has_pain_intent(text) else 0.5,
             )
         )
@@ -160,26 +163,111 @@ def _brace_object(text: str, start: int) -> str | None:
     return None
 
 
-def parse_gumroad_discover(html: str) -> list[Signal]:
+def _gumroad_relevance(count: int, average) -> float:
+    """Map a product's rating signal to a 0.4-0.7 relevance band."""
+    rel = 0.45
+    if count and count > 0:
+        rel = 0.55
+    try:
+        if average is not None and float(average) >= 4.0 and (count or 0) >= 5:
+            rel = 0.65
+    except (TypeError, ValueError):
+        pass
+    return max(0.4, min(0.7, rel))
+
+
+def _products_from_search_results(data: dict) -> list[dict]:
+    """Pull the product list out of an Inertia props.search_results or legacy blob."""
+    if not isinstance(data, dict):
+        return []
+    props = data.get("props") if isinstance(data.get("props"), dict) else {}
+    search = props.get("search_results") if isinstance(props, dict) else None
+    if search is None:
+        search = data.get("search_results")
+    if search is None:
+        return []
+    if isinstance(search, dict):
+        rows = search.get("products") or search.get("results") or []
+    elif isinstance(search, list):
+        rows = search
+    else:
+        rows = []
+    return [r for r in rows if isinstance(r, dict)]
+
+
+def _extract_inertia_page(html: str) -> dict | None:
+    """Inertia: <div id="app" data-page="{...}">. Unescape entities then json.loads."""
+    match = re.search(r'data-page="([^"]*)"', html)
+    if not match:
+        return None
+    raw = unescape(match.group(1)).replace("&quot;", '"')
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _extract_discover_component(html: str) -> dict | None:
+    """Older React-on-Rails: <script data-component-name="Discover">{...}</script>."""
+    match = re.search(
+        r'data-component-name="Discover"[^>]*>(.*?)</script>',
+        html,
+        re.DOTALL,
+    )
+    if not match:
+        return None
+    try:
+        data = json.loads(match.group(1).strip())
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _extract_search_results_blob(html: str) -> dict | None:
+    """Last-resort tolerant parser: brace-match a "search_results": {...} blob."""
     unesc = unescape(html).replace("&quot;", '"')
     match = re.search(r'"search_results"\s*:\s*\{', unesc)
     if not match:
-        return []
+        return None
     blob = _brace_object(unesc, match.start())
     if not blob:
-        return []
+        return None
     try:
         data = json.loads(blob)
     except json.JSONDecodeError:
-        return []
-    products = data.get("products") or []
-    if isinstance(products, dict):
-        products = products.get("products") or products.get("results") or []
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def parse_gumroad_discover(html: str) -> list[Signal]:
+    """Parse Gumroad discover HTML into sourced (non-fixture) gumroad Signals.
+
+    Supports the current Inertia data-page format, the older React-on-Rails
+    Discover component, and a tolerant search_results blob as a final fallback.
+    Pain points are never invented — only product name/seller/price/rating text.
+    """
+    products: list[dict] = []
+    for extractor in (_extract_inertia_page, _extract_discover_component):
+        data = extractor(html)
+        if data:
+            products = _products_from_search_results(data)
+            if products:
+                break
+    if not products:
+        data = _extract_search_results_blob(html)
+        if data:
+            if isinstance(data.get("search_results"), dict) or isinstance(
+                data.get("props"), dict
+            ):
+                products = _products_from_search_results(data)
+            else:
+                rows = data.get("products") or data.get("results") or []
+                products = [r for r in rows if isinstance(r, dict)]
+
     signals: list[Signal] = []
     seen: set[str] = set()
     for item in products:
-        if not isinstance(item, dict):
-            continue
         name = str(item.get("name") or item.get("title") or "").strip()
         url = str(item.get("url") or "").strip()
         permalink = str(item.get("permalink") or "").strip()
@@ -193,13 +281,23 @@ def parse_gumroad_discover(html: str) -> list[Signal]:
         seller = item.get("seller") if isinstance(item.get("seller"), dict) else {}
         seller_name = str((seller or {}).get("name") or item.get("seller_name") or "").strip()
         price = item.get("price_cents")
+        ratings = item.get("ratings") if isinstance(item.get("ratings"), dict) else {}
+        rating_count = int(
+            (ratings or {}).get("count")
+            or item.get("review_count")
+            or item.get("num_reviews")
+            or 0
+        )
+        rating_avg = (ratings or {}).get("average")
         extra = []
         if seller_name:
             extra.append(f"seller {seller_name}")
         if isinstance(price, int):
             extra.append(f"{price} cents")
+        if rating_count:
+            extra.append(f"{rating_count} ratings")
         text = name if not extra else f"{name} ({', '.join(extra)})"
-        sid = permalink or url
+        sid = permalink or str(item.get("id") or "") or url
         signals.append(
             Signal(
                 id=f"gr-{sid}",
@@ -208,11 +306,232 @@ def parse_gumroad_discover(html: str) -> list[Signal]:
                 url=url,
                 fixture=False,
                 author=seller_name,
-                engagement=int(item.get("review_count") or 0),
-                relevance=0.5,
+                engagement=rating_count,
+                relevance=_gumroad_relevance(rating_count, rating_avg),
             )
         )
     return signals
+
+
+_TAG_RE = re.compile(r"<[^>]+>")
+_SCRIPT_RE = re.compile(r"<(script|style)\b.*?</\1>", re.I | re.S)
+_BLOCK_RE = re.compile(r"</(p|div|li|h[1-6])>|<br\s*/?>", re.I)
+
+
+def strip_html(raw: str) -> str:
+    """Buyer-facing text out of an HTML fragment. No tags, collapsed whitespace."""
+    if not raw:
+        return ""
+    text = _SCRIPT_RE.sub(" ", raw)
+    text = _BLOCK_RE.sub(" ", text)
+    text = _TAG_RE.sub(" ", text)
+    return " ".join(unescape(text).split())
+
+
+def _data_page_props(html: str) -> dict:
+    """Inertia mounts its payload in a data-page attribute."""
+    match = re.search(r"data-page\s*=\s*(\"|')(.*?)\1", html, re.S)
+    if not match:
+        return {}
+    try:
+        payload = json.loads(unescape(match.group(2)))
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    props = payload.get("props")
+    return props if isinstance(props, dict) else {}
+
+
+def _meta_content(html: str, attr: str, value: str) -> str:
+    pattern = (
+        rf"<meta[^>]*{attr}\s*=\s*(\"|'){re.escape(value)}\1[^>]*"
+        r"content\s*=\s*(\"|')(.*?)\2"
+    )
+    match = re.search(pattern, html, re.I | re.S)
+    if match:
+        return " ".join(unescape(match.group(3)).split())
+    pattern_rev = (
+        rf"<meta[^>]*content\s*=\s*(\"|')(.*?)\1[^>]*"
+        rf"{attr}\s*=\s*(\"|'){re.escape(value)}\3"
+    )
+    match = re.search(pattern_rev, html, re.I | re.S)
+    if match:
+        return " ".join(unescape(match.group(2)).split())
+    return ""
+
+
+def _ld_json_description(html: str) -> str:
+    for block in re.findall(
+        r"<script[^>]*application/ld\+json[^>]*>(.*?)</script>", html, re.I | re.S
+    ):
+        try:
+            payload = json.loads(unescape(block.strip()))
+        except json.JSONDecodeError:
+            continue
+        candidates: list[dict] = []
+        stack = [payload]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, list):
+                stack.extend(node)
+            elif isinstance(node, dict):
+                candidates.append(node)
+                graph = node.get("@graph")
+                if isinstance(graph, (list, dict)):
+                    stack.append(graph)
+        for node in candidates:
+            node_type = node.get("@type")
+            types = node_type if isinstance(node_type, list) else [node_type]
+            if not any(str(t).lower() == "product" for t in types if t):
+                continue
+            desc = node.get("description")
+            if isinstance(desc, str) and desc.strip():
+                return strip_html(desc)
+    return ""
+
+
+def parse_gumroad_product(html: str) -> dict:
+    """
+    Buyer-facing text from a public Gumroad product page.
+
+    Order: Inertia data-page props.product.summary + description_html,
+    then <meta name="description">, og:description, schema.org Product.description.
+    Never invents text — an unreadable page returns empty strings.
+    """
+    if not html:
+        return {"summary": "", "description": "", "text": "", "source": ""}
+
+    props = _data_page_props(html)
+    product = props.get("product") if isinstance(props.get("product"), dict) else {}
+    summary = ""
+    description = ""
+    source = ""
+    if product:
+        raw_summary = product.get("summary")
+        if isinstance(raw_summary, str):
+            summary = strip_html(raw_summary)
+        raw_desc = product.get("description_html")
+        if isinstance(raw_desc, str):
+            description = strip_html(raw_desc)
+        if summary or description:
+            source = "inertia"
+
+    if not (summary or description):
+        meta = _meta_content(html, "name", "description")
+        if meta:
+            description = meta
+            source = "meta-description"
+
+    if not (summary or description):
+        og = _meta_content(html, "property", "og:description") or _meta_content(
+            html, "name", "og:description"
+        )
+        if og:
+            description = og
+            source = "og-description"
+
+    if not (summary or description):
+        ld = _ld_json_description(html)
+        if ld:
+            description = ld
+            source = "ld-json"
+
+    parts = [p for p in (summary, description) if p]
+    text = " ".join(parts)
+    seen_summary = summary.lower()
+    if summary and description.lower().startswith(seen_summary):
+        text = description
+    return {
+        "summary": summary,
+        "description": description,
+        "text": " ".join(text.split()),
+        "source": source,
+    }
+
+
+def _pain_sentences(text: str, limit: int = 3) -> tuple[str, ...]:
+    """
+    Quote only the sentences that themselves trip has_pain_intent.
+
+    Never invents pain: every returned string is verbatim source text that the
+    existing pain/intent patterns matched, and hype-only sentences are dropped.
+    """
+    if not text:
+        return ()
+    found: list[str] = []
+    seen: set[str] = set()
+    for raw in re.split(r"(?<=[.!?])\s+|\n+", text):
+        sentence = " ".join(raw.split())
+        if len(sentence) < 12 or not has_pain_intent(sentence):
+            continue
+        if is_hype_only(sentence):
+            continue
+        snippet = sentence[:160]
+        key = snippet.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(snippet)
+        if len(found) >= limit:
+            break
+    return tuple(found)
+
+
+def enrich_gumroad_products(
+    signals: list[Signal],
+    cap: int = GUMROAD_PRODUCT_PAGE_CAP,
+) -> tuple[list[Signal], list[str]]:
+    """
+    GET each discover product page and attach only the pain/intent it really shows.
+
+    A failed or empty product GET keeps the discover row untouched — never dropped,
+    never given invented pain.
+    """
+    notes: list[str] = []
+    enriched: list[Signal] = []
+    fetched = 0
+    with_clues = 0
+    for index, signal in enumerate(signals):
+        if index >= cap or not signal.url:
+            enriched.append(signal)
+            continue
+        status, body = http_get(signal.url)
+        fetched += 1
+        notes.append(f"gumroad product GET {signal.url} → {status}")
+        if status != 200:
+            enriched.append(signal)
+            continue
+        try:
+            parsed = parse_gumroad_product(body)
+        except Exception as exc:  # a weird page must not kill the run
+            notes.append(f"gumroad product parse failed {signal.url}: {type(exc).__name__}")
+            enriched.append(signal)
+            continue
+        extracted = parsed.get("text") or ""
+        if not extracted:
+            enriched.append(signal)
+            continue
+        pain = _pain_sentences(extracted) or _pain_from_text(extracted)
+        buying = _buying_from_text(extracted)
+        if pain or buying:
+            with_clues += 1
+        combined = f"{signal.text} — {extracted}".strip()
+        enriched.append(
+            replace(
+                signal,
+                text=combined[:SIGNAL_TEXT_CAP],
+                pain_points=signal.pain_points + pain,
+                buying_signals=signal.buying_signals + buying,
+                relevance=0.75 if (pain or buying) else signal.relevance,
+            )
+        )
+    if signals:
+        notes.append(
+            f"gumroad product pages: {fetched} fetched (cap {cap}), "
+            f"{with_clues} with pain/intent"
+        )
+    return enriched, notes
 
 
 def fetch_gumroad(topic: str) -> tuple[list[Signal], list[str]]:
@@ -223,6 +542,8 @@ def fetch_gumroad(topic: str) -> tuple[list[Signal], list[str]]:
         return [], notes
     signals = parse_gumroad_discover(body)
     notes.append(f"gumroad parsed {len(signals)} products")
+    signals, product_notes = enrich_gumroad_products(signals)
+    notes.extend(product_notes)
     return signals, notes
 
 
