@@ -31,7 +31,7 @@ def resolve_out(raw: str) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
-    args = [a for a in args if a != "--fixtures"]
+    # Keep --fixtures; runner uses it to skip public HTTP.
     if "--out" in args:
         idx = args.index("--out")
         if idx + 1 < len(args):

@@ -1,24 +1,23 @@
 # Runner
 
-One command. Read-only scout (or fixtures if no keys). Exactly one buyer-facing promise. Score. Local markdown + JSON receipt. Exit.
+One command. Read-only scout: public/unauth HTTP if it works, else fixtures. Exactly one buyer-facing promise. Score. Local markdown + JSON receipt. Exit.
 
 Not a factory. No FastAPI, SQLite, post, listing, checkout, or ping.
 
 ## How to run
 
-From the repo root, with no env keys:
-
 ```bash
-python3 -m green
-ENVIRONMENT=development python -m runner
+cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green
 ```
 
-Writes:
+Pepper crons that command Monday 8:15am ET. Do not add a second scheduler.
+
+Writes (via `python3 -m runner`):
 
 - `receipts/latest.md`
 - `receipts/latest.json`
 
-Development never calls xAI, Gumroad, or Supabase. Missing APIs become fixtures. Fixture rows do not count as sourced.
+`--fixtures` skips HTTP. Missing keys are fine: try public Reddit JSON and Gumroad discover, then fixtures. Fixture rows do not count as sourced.
 
 ## Paper-win bar
 
@@ -29,7 +28,7 @@ Record hit/miss only. Do not ping anyone. Miss unless **all four** are true:
 3. score >60, confidence medium or high, and source URLs
 4. the promise still makes sense after reading the sources
 
-A miss writes the word `miss` and exits.
+A miss writes the word `miss` and exits. No mock on miss.
 
 ## Still Red
 
@@ -41,10 +40,10 @@ A miss writes the word `miss` and exits.
 ## Tests
 
 ```bash
-PYTHONPATH=. python -m pytest runner/tests tests/test_green_runner.py -v
+PYTHONPATH=. python3 -m pytest runner/tests tests/test_green_runner.py -v
 ```
 
 ## Sample receipts
 
-- `runner/examples/miss.md` / `runner/examples/miss.json` — default no-keys run
+- `runner/examples/miss.md` / `runner/examples/miss.json` — fixtures / no sourced rows
 - `runner/examples/hit.md` / `runner/examples/hit.json` — canned sourced path used by pytest

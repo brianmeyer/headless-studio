@@ -1,11 +1,20 @@
-"""Read-only scout. Development uses fixtures. No live xAI, Gumroad, or Supabase."""
+"""Read-only scout: public HTTP, then fixtures. Fixtures never count as sourced."""
 
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass, field
 
 from runner.fixtures import DEFAULT_TOPIC, fixture_signals
+from runner.live import live_signals
 from runner.models import Signal
+
+
+@dataclass
+class ScoutOutcome:
+    signals: list[Signal]
+    notes: list[str] = field(default_factory=list)
+    used_fixtures: bool = False
 
 
 def environment_name() -> str:
@@ -13,7 +22,7 @@ def environment_name() -> str:
 
 
 def live_keys_present() -> bool:
-    """True only if a live scout key is set. Runner still will not call those APIs."""
+    """True if a live-auth key is set. Public HTTP does not require these."""
     return bool(
         os.environ.get("XAI_API_KEY")
         or os.environ.get("REDDIT_CLIENT_ID")
@@ -21,13 +30,35 @@ def live_keys_present() -> bool:
     )
 
 
-def scout(topic: str = DEFAULT_TOPIC) -> list[Signal]:
+def scout(topic: str = DEFAULT_TOPIC, use_fixtures: bool = False) -> ScoutOutcome:
     """
     One-shot read-only scout.
 
-    In development (default), or whenever live APIs are missing, return fixtures.
-    This slice never performs HTTP. Fixture rows are marked fixture=True so the
-    silence gates treat them as a miss.
+    Keys missing: try public/unauth HTTP, then fixtures, still miss.
+    Fixture rows are marked fixture=True and never count as sourced.
+    Live rows (if any) are returned alone — fixtures are not mixed in.
     """
     _ = live_keys_present()
-    return fixture_signals(topic)
+    if use_fixtures:
+        return ScoutOutcome(
+            signals=fixture_signals(topic),
+            notes=[
+                "scout: --fixtures (skipped public HTTP)",
+                "fixtures never count as sourced",
+            ],
+            used_fixtures=True,
+        )
+
+    live, notes = live_signals(topic)
+    if live:
+        notes.append("scout: live public HTTP (fixtures not mixed in)")
+        notes.append("fixtures never count as sourced")
+        return ScoutOutcome(signals=live, notes=notes, used_fixtures=False)
+
+    notes.append("scout: public HTTP empty/failed → fixtures")
+    notes.append("fixtures never count as sourced")
+    return ScoutOutcome(
+        signals=fixture_signals(topic),
+        notes=notes,
+        used_fixtures=True,
+    )

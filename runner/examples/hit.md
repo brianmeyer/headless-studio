@@ -9,7 +9,14 @@ Paper-win hit. One buyer-facing promise recorded. No ping. Nothing was posted, l
 - **ping:** no
 - **topic:** chatgpt prompts for property managers
 - **environment:** development
-- **written:** 2026-08-14T21:03:24Z
+- **written:** 2026-08-14T23:23:35Z
+- **how to run:** `cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green`
+- **live signals:** 8
+- **fixture signals:** 0 (never sourced)
+
+## Scout
+
+- scout skipped: signals provided
 
 ## Buyer-facing promise (draft only)
 
@@ -25,16 +32,16 @@ One prompt pack so property managers can handle wasting hours rewriting listing 
 | Gate | Result | Detail |
 | --- | --- | --- |
 | sourced_signals | pass | 8 sourced non-fixture signals (need ≥5) |
-| pain_intent_clues | pass | 27 pain/intent clues, hype excluded (need ≥3) |
+| pain_intent_clues | pass | 22 pain/intent clues, hype excluded (need ≥3) |
 | score_medium_sources | pass | score 77.8 (medium), 8 source URLs (need >60, medium+, sources) |
-| promise_matches_sources | pass | 21 promise words appear in sources |
+| promise_matches_sources | pass | 20 promise words appear in sources |
 
 ## Score
 
 - **total:** 77.8
 - **demand:** 46.8
 - **intent:** 36.0
-- **competition:** -5.0 (default; no Gumroad HTTP)
+- **competition:** -5.0
 - **confidence:** medium
 
 ## Pain / intent clues
@@ -42,21 +49,16 @@ One prompt pack so property managers can handle wasting hours rewriting listing 
 - wasting hours rewriting listing descriptions
 - need a prompt pack
 - I keep wasting hours rewriting listing descriptions. Need a prompt pack that actually works for property managers.
-- tenant notices inconsistent
 - starting from scratch
 - how do I keep the tone consistent?
 - Tenant notices are a mess. How do I keep the tone consistent without starting from scratch every time?
-- renewal letters don't work
 - looking for ChatGPT prompts
 - Looking for ChatGPT prompts for renewal letters. Current ones don't work and residents get confused.
 - manual copy-paste takes hours
-- miss units on follow-up
 - would pay for a checklist plus prompts
 - Frustrated with showing follow-ups. Manual copy-paste takes hours and I still miss units.
-- maintenance updates sound like a robot
 - wish there was a prompt pack
 - Wish there was a prompt pack for maintenance updates that doesn't sound like a robot. Tired of rewriting from scratch.
-- delinquency tone too harsh or too soft
 - need help staying firm
 - anyone know a template plus prompt combo?
 - Anyone know a template + prompt combo for delinquency notices? Need help staying firm without sounding cruel.

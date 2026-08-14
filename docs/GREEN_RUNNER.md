@@ -1,6 +1,6 @@
 # Green runner (Vera locked)
 
-One vehicle. `python -m green` is the Mac entry for the same paper-win pipeline as `python -m runner`.
+One vehicle. `python3 -m green` is the Mac entry for the same paper-win pipeline as `python -m runner`.
 
 One-shot, then exit:
 
@@ -10,26 +10,40 @@ This is the locked path. It does **not** start FastAPI, n8n, Railway, Pinterest,
 
 ## How to run
 
-From the repo root. No secrets. No `.env` required.
+Exact entrypoint (Pepper crons this Monday 8:15am ET; do not add another scheduler):
 
 ```bash
-python -m green
-python -m green --topic "chatgpt prompts for property managers"
-python -m green --fixtures
-python -m green --out green/out/manual/RECEIPT.md
+cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green
+```
+
+No secrets. No `.env` required.
+
+```bash
+python3 -m green
+python3 -m green --topic "chatgpt prompts for property managers"
+python3 -m green --fixtures
+python3 -m green --out green/out/manual/RECEIPT.md
 ```
 
 Equivalent entry (same pipeline):
 
 ```bash
-ENVIRONMENT=development python -m runner
-ENVIRONMENT=development python -m runner --topic "chatgpt prompts for property managers" --out receipts/latest.md
+ENVIRONMENT=development python3 -m runner
+ENVIRONMENT=development python3 -m runner --topic "chatgpt prompts for property managers" --out receipts/latest.md
 ```
 
-`--fixtures` documents the development default (already fixtures-only when APIs/keys are missing). Fixture rows are marked `fixture=true` and **do not** count toward the sourced-signal gate.
+## Scout path (keys missing)
 
-`python -m green` writes `green/out/<timestamp>/RECEIPT.md` (and `.json`) unless `--out` is set.
-`python -m runner` writes `receipts/latest.md` (and `.json`) unless `--out` is set.
+1. Try public/unauth HTTP: Reddit search JSON and/or the existing Gumroad discover scrape
+2. If that yields zero live rows, fall back to fixtures
+3. Still **miss** unless the four gates pass on **sourced** rows
+4. Fixture rows are marked `fixture=true` and **never** count as sourced
+5. `--fixtures` skips HTTP and uses fixture rows (still a miss)
+
+Live rows are returned alone. Fixtures are not mixed in to inflate counts. No sales mock on miss.
+
+`python3 -m green` writes `green/out/<timestamp>/RECEIPT.md` (and `.json`) unless `--out` is set.
+`python3 -m runner` writes `receipts/latest.md` (and `.json`) unless `--out` is set.
 
 ## Paper-win bar
 
@@ -45,7 +59,7 @@ A hit records the promise on the receipt only. No factory. No ping.
 
 ## Score
 
-0–100 ≈ demand + intent + a default competition penalty (no Gumroad HTTP in this slice). Confidence is `low` / `medium` / `high`. Formula lives in `runner/scorer.py`.
+0–100 ≈ demand + intent + a default competition penalty. Confidence is `low` / `medium` / `high`. Formula lives in `runner/scorer.py`. Live Gumroad rows are competition observations, not invented buyer pain.
 
 ## Still Red (not this slice)
 
@@ -59,5 +73,5 @@ Documented on every receipt. Do not implement them here.
 ## Tests
 
 ```bash
-PYTHONPATH=. python -m pytest runner/tests tests/test_green_runner.py -v
+PYTHONPATH=. python3 -m pytest runner/tests tests/test_green_runner.py -v
 ```

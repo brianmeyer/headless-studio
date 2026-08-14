@@ -18,15 +18,24 @@ def run(
     topic: str = DEFAULT_TOPIC,
     out_path: str | Path | None = None,
     signals: list[Signal] | None = None,
+    use_fixtures: bool = False,
 ) -> RunResult:
     """
     Scout (read-only) → draft one buyer-facing promise → score → paper-win gates → receipt.
 
     Pass `signals` to skip scout (tests / canned sourced objects).
-    Default development scout is fixtures only. Fixture rows cannot pass gate 1.
+    Keys missing: public HTTP, then fixtures. Fixture rows cannot pass gate 1.
     """
     env = environment_name()
-    observed = tuple(signals if signals is not None else scout(topic))
+    notes: list[str] = []
+    if signals is not None:
+        observed = tuple(signals)
+        notes.append("scout skipped: signals provided")
+    else:
+        outcome = scout(topic, use_fixtures=use_fixtures)
+        observed = tuple(outcome.signals)
+        notes.extend(outcome.notes)
+
     promise = draft_promise(observed, topic)
     score = score_promise(observed, promise)
     gates = evaluate_gates(observed, promise, score)
@@ -44,5 +53,6 @@ def run(
         signals=observed,
         clues=clues,
         receipt_path=receipt_path,
+        notes=notes,
     )
     return write_outputs(result, receipt_path)

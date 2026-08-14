@@ -2,14 +2,22 @@
 
 miss
 
-Paper-win miss. Scouted one buyer-facing promise and stopped. No ping. Silence unless all four gates pass.
+Paper-win miss. Scouted one buyer-facing promise and stopped. No ping. Silence unless all four gates pass. No mock on miss.
 
 - **verdict:** miss
 - **paper_win:** false
 - **ping:** no
 - **topic:** chatgpt prompts for property managers
 - **environment:** development
-- **written:** 2026-08-14T21:03:23Z
+- **written:** 2026-08-14T23:23:22Z
+- **how to run:** `cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green`
+- **live signals:** 0
+- **fixture signals:** 4 (never sourced)
+
+## Scout
+
+- scout: --fixtures (skipped public HTTP)
+- fixtures never count as sourced
 
 ## Buyer-facing promise (draft only)
 
@@ -25,28 +33,21 @@ One prompt pack so property managers can handle rewriting listing copy from scra
 | Gate | Result | Detail |
 | --- | --- | --- |
 | sourced_signals | fail | 0 sourced non-fixture signals (need ≥5) |
-| pain_intent_clues | pass | 8 pain/intent clues, hype excluded (need ≥3) |
-| score_medium_sources | fail | score 38.5 (low), 0 source URLs (need >60, medium+, sources) |
-| promise_matches_sources | pass | 12 promise words appear in sources |
+| pain_intent_clues | fail | 0 pain/intent clues, hype excluded (need ≥3) |
+| score_medium_sources | fail | score 0 (low), 0 source URLs (need >60, medium+, sources) |
+| promise_matches_sources | fail | no sources to read |
 
 ## Score
 
-- **total:** 38.5
-- **demand:** 15.5
-- **intent:** 28.0
-- **competition:** -5.0 (default; no Gumroad HTTP)
+- **total:** 0
+- **demand:** 0
+- **intent:** 0
+- **competition:** 0
 - **confidence:** low
 
 ## Pain / intent clues
 
-- rewriting listing copy from scratch
-- looking for prompts
-- Looking for chatgpt prompts for property managers that don't sound like a robot. Tired of rewriting listing copy from scratch every week.
-- manual copy-paste wasting hours
-- how do I keep tenant notices consistent?
-- Property managers: how do I keep tenant notices consistent? Manual copy-paste is wasting hours.
-- anyone know a decent starting point?
-- Anyone know a decent starting point for chatgpt prompts for property managers?
+- (none)
 
 ## Sources
 
