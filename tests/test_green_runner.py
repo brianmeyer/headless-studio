@@ -54,3 +54,16 @@ def test_score_60_or_less_is_miss(tmp_path: Path):
     report = evaluate_gates(signals, promise, score)
     assert report.by_name("score_medium_sources").passed is False
     assert report.all_passed is False
+
+
+
+def test_green_out_directory_writes_receipt(tmp_path: Path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    out_dir = tmp_path / "green" / "out"
+    out_dir.mkdir(parents=True)
+    code = green_main(["--fixtures", "--out", str(out_dir)])
+    assert code == 0
+    receipt = out_dir / "RECEIPT.md"
+    assert receipt.is_file()
+    assert "miss" in receipt.read_text(encoding="utf-8")
+    assert "miss" in capsys.readouterr().out

@@ -67,3 +67,115 @@ def test_incoherent_promise_fails_gate_four():
     assert gate is not None
     assert gate.passed is False
     assert "overlap" in detail or "not" in detail
+
+
+from runner.models import Signal
+
+
+def _neutral_sourced(n: int = 5) -> list[Signal]:
+    return [
+        Signal(
+            id=f"n-{i}",
+            source="x",
+            text="The weather is pleasant this afternoon in Cleveland.",
+            url=f"https://x.com/example/status/{2000 + i}",
+            fixture=False,
+            pain_points=("pleasant weather notes",),
+            buying_signals=("afternoon update",),
+            engagement=80,
+            relevance=0.9,
+        )
+        for i in range(n)
+    ]
+
+
+def test_url_less_non_fixture_is_not_sourced():
+    signals = [
+        Signal(
+            id=f"u-{i}",
+            source="x",
+            text="Tired of rewriting listing copy from scratch every week.",
+            url="",
+            fixture=False,
+            pain_points=("rewriting listing copy from scratch",),
+            engagement=50,
+            relevance=0.8,
+        )
+        for i in range(5)
+    ]
+    promise = draft_promise(signals, "chatgpt prompts for property managers")
+    score = score_promise(signals, promise)
+    report = evaluate_gates(signals, promise, score)
+    sourced = report.by_name("sourced_signals")
+    assert sourced is not None
+    assert sourced.passed is False
+    assert not report.all_passed
+
+
+def test_neutral_signals_cannot_pass_silence_gates():
+    signals = _neutral_sourced()
+    promise = draft_promise(signals, "chatgpt prompts for property managers")
+    score = score_promise(signals, promise)
+    report = evaluate_gates(signals, promise, score)
+    clues = report.by_name("pain_intent_clues")
+    assert clues is not None
+    assert clues.passed is False
+    assert not report.all_passed
+
+
+def test_fewer_than_three_clues_is_a_miss():
+    signals = [
+        Signal(
+            id="one-pain",
+            source="x",
+            text="Tired of rewriting listing copy from scratch every week.",
+            url="https://x.com/example/status/3001",
+            fixture=False,
+            pain_points=("rewriting listing copy from scratch",),
+            engagement=50,
+            relevance=0.8,
+        ),
+        Signal(
+            id="weather-1",
+            source="x",
+            text="Nice morning for a walk around the block.",
+            url="https://x.com/example/status/3002",
+            fixture=False,
+            engagement=10,
+            relevance=0.2,
+        ),
+        Signal(
+            id="weather-2",
+            source="reddit",
+            text="The coffee shop downtown opened early today.",
+            url="https://reddit.com/r/example/comments/eee555",
+            fixture=False,
+            engagement=10,
+            relevance=0.2,
+        ),
+        Signal(
+            id="weather-3",
+            source="x",
+            text="Traffic on main street looks lighter than usual.",
+            url="https://x.com/example/status/3003",
+            fixture=False,
+            engagement=10,
+            relevance=0.2,
+        ),
+        Signal(
+            id="weather-4",
+            source="reddit",
+            text="Someone posted a photo of a sunset near the lake.",
+            url="https://reddit.com/r/example/comments/fff666",
+            fixture=False,
+            engagement=10,
+            relevance=0.2,
+        ),
+    ]
+    promise = draft_promise(signals, "chatgpt prompts for property managers")
+    score = score_promise(signals, promise)
+    report = evaluate_gates(signals, promise, score)
+    clues = report.by_name("pain_intent_clues")
+    assert clues is not None
+    assert clues.passed is False
+    assert not report.all_passed

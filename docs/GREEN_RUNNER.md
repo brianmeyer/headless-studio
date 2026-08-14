@@ -56,5 +56,5 @@ Do not implement them here.
 ## Tests
 
 ```bash
-pytest runner/tests tests/test_green_runner.py -v
+PYTHONPATH=. python -m pytest runner/tests tests/test_green_runner.py -v
 ```

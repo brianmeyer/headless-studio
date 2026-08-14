@@ -6,8 +6,14 @@ from runner.clues import extract_clues, is_hype_only
 from runner.models import Promise, Score, Signal
 
 
+def _has_source_url(signal: Signal) -> bool:
+    url = (signal.url or "").strip()
+    return url.startswith("http://") or url.startswith("https://")
+
+
 def sourced_signals(signals: list[Signal] | tuple[Signal, ...]) -> list[Signal]:
-    return [s for s in signals if not s.fixture]
+    """Non-fixture rows with a real source URL. No URL → not sourced."""
+    return [s for s in signals if (not s.fixture) and _has_source_url(s)]
 
 
 def score_promise(
