@@ -471,3 +471,35 @@ def test_pain_sentences_reach_pain_past_the_first_160_chars():
     found = _pain_sentences(text)
     assert found
     assert "tired of rewriting listing copy from scratch" in found[0].lower()
+
+
+
+def test_enrichment_skips_non_gumroad_urls(monkeypatch):
+    """Product enrichment must not GET arbitrary hosts from discover JSON."""
+    from runner.live import enrich_gumroad_products, is_public_gumroad_url
+    from runner.models import Signal
+
+    assert is_public_gumroad_url("https://seller.gumroad.com/l/pack")
+    assert is_public_gumroad_url("https://gumroad.com/l/pack")
+    assert not is_public_gumroad_url("http://gumroad.com/l/pack")
+    assert not is_public_gumroad_url("https://evil.example/l/pack")
+    assert not is_public_gumroad_url("file:///etc/passwd")
+
+    def boom(url, timeout=12.0):
+        raise AssertionError(f"http_get must not run for {url}")
+
+    monkeypatch.setattr("runner.live.http_get", boom)
+    signals = [
+        Signal(
+            id="gr-evil",
+            source="gumroad",
+            text="Prompt pack",
+            url="https://evil.example/l/pack",
+            fixture=False,
+        )
+    ]
+    out, notes = enrich_gumroad_products(signals)
+    assert len(out) == 1
+    assert out[0].url == "https://evil.example/l/pack"
+    assert out[0].pain_points == ()
+    assert any("skipped" in n for n in notes)

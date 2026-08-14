@@ -7,7 +7,7 @@ import re
 from dataclasses import replace
 from html import unescape
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 from runner.clues import has_pain_intent, is_hype_only
@@ -23,6 +23,19 @@ REDDIT_PROPERTY = (
     "?q={q}&restrict_sr=1&limit=25&sort=new&raw_json=1"
 )
 GUMROAD_DISCOVER = "https://gumroad.com/discover?query={q}"
+
+
+
+def is_public_gumroad_url(url: str) -> bool:
+    """True only for https Gumroad hosts. Enrichment must not follow arbitrary URLs."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False
+    if parsed.scheme != "https":
+        return False
+    host = (parsed.hostname or "").lower()
+    return host == "gumroad.com" or host.endswith(".gumroad.com")
 
 
 def http_get(url: str, timeout: float = TIMEOUT_SEC) -> tuple[int, str]:
@@ -494,6 +507,10 @@ def enrich_gumroad_products(
     with_clues = 0
     for index, signal in enumerate(signals):
         if index >= cap or not signal.url:
+            enriched.append(signal)
+            continue
+        if not is_public_gumroad_url(signal.url):
+            notes.append(f"gumroad product GET skipped (not gumroad https): {signal.url}")
             enriched.append(signal)
             continue
         status, body = http_get(signal.url)
