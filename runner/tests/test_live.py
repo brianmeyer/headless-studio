@@ -6,7 +6,13 @@ import json
 from pathlib import Path
 
 from runner import run
-from runner.live import parse_gumroad_discover, parse_reddit_listing
+from runner.live import (
+    fetch_gumroad,
+    fetch_gumroad_pages,
+    gumroad_page_text,
+    parse_gumroad_discover,
+    parse_reddit_listing,
+)
 from runner.scout import scout
 
 
@@ -49,6 +55,25 @@ def _gumroad_html(n: int = 6) -> str:
     return f"<html><head></head><body>{escaped}</body></html>"
 
 
+PAGE_WITH_PAIN = (
+    "<html><head>"
+    '<meta name="description" content="For sellers who can\'t tell what they earned.">'
+    "<script>var junk = {ignored: true};</script>"
+    "</head><body><h1>Shop Books Workbook</h1>"
+    "<p>I built this because tracking fees by hand is wasting hours every month "
+    "and starting over in a new sheet each January is too much.</p>"
+    "</body></html>"
+)
+
+PAGE_WITHOUT_PAIN = (
+    "<html><head>"
+    '<meta name="description" content="A tidy workbook for shop numbers.">'
+    "</head><body><h1>Prompt Pack 0 for Agents</h1>"
+    "<p>Instant download. Four tabs. Works in Google Sheets and Excel.</p>"
+    "</body></html>"
+)
+
+
 def test_parse_reddit_listing_marks_sourced():
     signals = parse_reddit_listing(_reddit_body(5))
     assert len(signals) == 5
@@ -65,6 +90,101 @@ def test_parse_gumroad_discover_marks_sourced_without_invented_pain():
     assert all(s.source == "gumroad" for s in signals)
     assert all(s.url.startswith("https://") for s in signals)
     assert all(s.pain_points == () for s in signals)
+
+
+def test_gumroad_page_text_reads_meta_and_body_without_scripts():
+    text = gumroad_page_text(PAGE_WITH_PAIN)
+    assert "can't tell what they earned" in text
+    assert "wasting hours" in text
+    assert "Shop Books Workbook" in text
+    assert "var junk" not in text
+
+
+def test_gumroad_product_page_with_pain_sets_pain_points(monkeypatch):
+    monkeypatch.setattr("runner.live.http_get", lambda url, timeout=12.0: (200, PAGE_WITH_PAIN))
+    discovered = parse_gumroad_discover(_gumroad_html(2))
+    enriched, notes = fetch_gumroad_pages(discovered)
+    assert len(enriched) == 2
+    for signal in enriched:
+        assert signal.pain_points
+        assert "wasting hours" in " ".join(signal.pain_points)
+        # Gate 4 reads signal.text, so the page words have to land there too.
+        assert "wasting hours" in signal.text
+        assert signal.fixture is False
+    assert any("→ 200" in note for note in notes)
+
+
+def test_gumroad_product_page_without_pain_has_no_pain_points(monkeypatch):
+    monkeypatch.setattr(
+        "runner.live.http_get",
+        lambda url, timeout=12.0: (200, PAGE_WITHOUT_PAIN),
+    )
+    discovered = parse_gumroad_discover(_gumroad_html(3))
+    enriched, _ = fetch_gumroad_pages(discovered)
+    assert len(enriched) == 3
+    for signal in enriched:
+        assert signal.pain_points == ()
+        assert signal.buying_signals == ()
+        assert signal.url.startswith("https://")
+
+
+def test_gumroad_page_failure_keeps_sourced_row_without_pain(monkeypatch):
+    monkeypatch.setattr("runner.live.http_get", lambda url, timeout=12.0: (500, "nope"))
+    discovered = parse_gumroad_discover(_gumroad_html(2))
+    enriched, notes = fetch_gumroad_pages(discovered)
+    assert [s.url for s in enriched] == [s.url for s in discovered]
+    assert all(s.pain_points == () for s in enriched)
+    assert all(not s.fixture for s in enriched)
+    assert any("→ 500" in note for note in notes)
+    assert any("no invented pain" in note for note in notes)
+
+
+def test_gumroad_pages_are_capped(monkeypatch):
+    calls: list[str] = []
+
+    def fake_get(url, timeout=12.0):
+        calls.append(url)
+        return 200, PAGE_WITH_PAIN
+
+    monkeypatch.setattr("runner.live.http_get", fake_get)
+    discovered = parse_gumroad_discover(_gumroad_html(11))
+    enriched, notes = fetch_gumroad_pages(discovered)
+    assert len(enriched) == 11
+    assert len(calls) == 8
+    assert any("capped at 8" in note for note in notes)
+
+
+def test_gumroad_discover_then_pages(monkeypatch):
+    html = _gumroad_html(3)
+
+    def fake_get(url, timeout=12.0):
+        if "discover" in url:
+            return 200, html
+        return 200, PAGE_WITH_PAIN
+
+    monkeypatch.setattr("runner.live.http_get", fake_get)
+    signals, notes = fetch_gumroad("etsy shop bookkeeping")
+    assert len(signals) == 3
+    assert all(s.pain_points for s in signals)
+    assert any("gumroad parsed 3 products" in note for note in notes)
+    assert any("pages with pain language: 3" in note for note in notes)
+
+
+def test_reddit_403_is_recorded_once_and_not_retried(monkeypatch):
+    calls: list[str] = []
+
+    def fake_get(url, timeout=12.0):
+        calls.append(url)
+        return 403, "Blocked"
+
+    monkeypatch.setattr("runner.live.http_get", fake_get)
+    from runner.live import fetch_reddit
+
+    signals, notes = fetch_reddit("etsy shop bookkeeping")
+    assert signals == []
+    assert len(calls) == 1
+    assert any("→ 403" in note for note in notes)
+    assert any("not retried" in note for note in notes)
 
 
 def test_fixtures_flag_skips_http(monkeypatch):
