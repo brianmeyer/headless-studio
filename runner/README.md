@@ -17,7 +17,15 @@ Writes:
 - `receipts/latest.md`
 - `receipts/latest.json`
 
+Optional local dump (still no HTTP):
+
+```bash
+python -m runner --signals runner/examples/sourced-signals.json
+```
+
 Development never calls xAI, Gumroad, or Supabase. Missing APIs become fixtures. Fixture rows do not count as sourced.
+
+Review plan for the second model: `runner/PLAN.md`.
 
 ## Paper-win bar
 

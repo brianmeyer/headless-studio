@@ -31,6 +31,7 @@ def test_default_run_writes_miss_markdown_and_json(tmp_path: Path, monkeypatch):
     assert payload["paper_win"] is False
     assert payload["ping"] is False
     assert payload["still_red"] == list(STILL_RED)
+    assert payload["scout_mode"] == "fixtures"
     assert all(s.fixture for s in result.signals)
 
 
@@ -50,6 +51,7 @@ def test_sourced_canned_run_writes_hit_receipt_only(tmp_path: Path):
     assert payload["paper_win"] is True
     assert payload["ping"] is False
     assert payload["still_red"] == list(STILL_RED)
+    assert payload["scout_mode"] == "injected"
 
 
 def test_main_one_liner_writes_miss(tmp_path: Path, monkeypatch, capsys):
@@ -62,3 +64,27 @@ def test_main_one_liner_writes_miss(tmp_path: Path, monkeypatch, capsys):
     written = (tmp_path / "receipts" / "latest.md").read_text(encoding="utf-8")
     assert "miss" in written
     assert (tmp_path / "receipts" / "latest.json").is_file()
+
+
+def test_local_signals_file_can_hit(tmp_path: Path):
+    src = Path("runner/examples/sourced-signals.json")
+    receipt = tmp_path / "from-file.md"
+    result = run(out_path=receipt, signals_path=src)
+    assert result.scout_mode == "local_file"
+    assert result.verdict == "hit"
+    payload = json.loads((tmp_path / "from-file.json").read_text(encoding="utf-8"))
+    assert payload["scout_mode"] == "local_file"
+    assert payload["paper_win"] is True
+    assert payload["ping"] is False
+
+
+def test_main_signals_flag_uses_local_file(tmp_path: Path, monkeypatch, capsys):
+    src = Path("runner/examples/sourced-signals.json").resolve()
+    monkeypatch.chdir(tmp_path)
+    code = main(["--signals", str(src), "--out", "receipts/latest.md"])
+    assert code == 0
+    captured = capsys.readouterr()
+    assert "hit" in captured.out
+    text = (tmp_path / "receipts" / "latest.md").read_text(encoding="utf-8")
+    assert "scout_mode:** local_file" in text
+    assert "hit" in text

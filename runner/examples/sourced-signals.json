@@ -1,0 +1,150 @@
+[
+  {
+    "id": "x-1",
+    "source": "x",
+    "text": "I keep wasting hours rewriting listing descriptions. Need a prompt pack that actually works for property managers.",
+    "url": "https://x.com/example/status/1001",
+    "created_at": "2026-02-01T12:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "wasting hours rewriting listing descriptions"
+    ],
+    "buying_signals": [
+      "need a prompt pack"
+    ],
+    "questions": [],
+    "engagement": 84,
+    "relevance": 0.86,
+    "author": "pm_ops"
+  },
+  {
+    "id": "x-2",
+    "source": "x",
+    "text": "Tenant notices are a mess. How do I keep the tone consistent without starting from scratch every time?",
+    "url": "https://x.com/example/status/1002",
+    "created_at": "2026-02-01T13:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "tenant notices inconsistent",
+      "starting from scratch"
+    ],
+    "buying_signals": [],
+    "questions": [
+      "how do I keep the tone consistent?"
+    ],
+    "engagement": 61,
+    "relevance": 0.81,
+    "author": "lease_desk"
+  },
+  {
+    "id": "rd-1",
+    "source": "reddit",
+    "text": "Looking for ChatGPT prompts for renewal letters. Current ones don't work and residents get confused.",
+    "url": "https://reddit.com/r/PropertyManagement/comments/aaa111",
+    "created_at": "2026-02-02T09:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "renewal letters don't work"
+    ],
+    "buying_signals": [
+      "looking for ChatGPT prompts"
+    ],
+    "questions": [],
+    "engagement": 140,
+    "relevance": 0.9,
+    "author": "u/on_site_mgr"
+  },
+  {
+    "id": "rd-2",
+    "source": "reddit",
+    "text": "Frustrated with showing follow-ups. Manual copy-paste takes hours and I still miss units.",
+    "url": "https://reddit.com/r/realestate/comments/bbb222",
+    "created_at": "2026-02-02T10:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "manual copy-paste takes hours",
+      "miss units on follow-up"
+    ],
+    "buying_signals": [
+      "would pay for a checklist plus prompts"
+    ],
+    "questions": [],
+    "engagement": 97,
+    "relevance": 0.84,
+    "author": "u/showing_coord"
+  },
+  {
+    "id": "x-3",
+    "source": "x",
+    "text": "Wish there was a prompt pack for maintenance updates that doesn't sound like a robot. Tired of rewriting from scratch.",
+    "url": "https://x.com/example/status/1003",
+    "created_at": "2026-02-03T08:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "maintenance updates sound like a robot"
+    ],
+    "buying_signals": [
+      "wish there was a prompt pack"
+    ],
+    "questions": [],
+    "engagement": 73,
+    "relevance": 0.8,
+    "author": "maint_lead"
+  },
+  {
+    "id": "rd-3",
+    "source": "reddit",
+    "text": "Anyone know a template + prompt combo for delinquency notices? Need help staying firm without sounding cruel.",
+    "url": "https://reddit.com/r/PropertyManagement/comments/ccc333",
+    "created_at": "2026-02-03T11:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "delinquency tone too harsh or too soft"
+    ],
+    "buying_signals": [
+      "need help staying firm"
+    ],
+    "questions": [
+      "anyone know a template plus prompt combo?"
+    ],
+    "engagement": 118,
+    "relevance": 0.88,
+    "author": "u/collections_pm"
+  },
+  {
+    "id": "x-4",
+    "source": "x",
+    "text": "Can't find prompts that mention actual lease clauses. Generic ChatGPT output is useless for property managers.",
+    "url": "https://x.com/example/status/1004",
+    "created_at": "2026-02-04T15:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "can't find prompts that mention lease clauses"
+    ],
+    "buying_signals": [
+      "looking for property-manager-specific prompts"
+    ],
+    "questions": [],
+    "engagement": 55,
+    "relevance": 0.83,
+    "author": "legalish_pm"
+  },
+  {
+    "id": "rd-4",
+    "source": "reddit",
+    "text": "Overwhelmed writing owner reports every Friday. Would pay for a guide with prompts I can paste into ChatGPT.",
+    "url": "https://reddit.com/r/smallbusiness/comments/ddd444",
+    "created_at": "2026-02-04T16:00:00Z",
+    "fixture": false,
+    "pain_points": [
+      "overwhelmed writing owner reports"
+    ],
+    "buying_signals": [
+      "would pay for a guide with prompts"
+    ],
+    "questions": [],
+    "engagement": 166,
+    "relevance": 0.87,
+    "author": "u/owner_reporter"
+  }
+]

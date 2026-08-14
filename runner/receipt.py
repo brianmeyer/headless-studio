@@ -21,6 +21,7 @@ def receipt_payload(result: RunResult) -> dict:
         "verdict": result.verdict,
         "paper_win": result.verdict == "hit",
         "ping": False,
+        "scout_mode": result.scout_mode,
         "topic": result.topic,
         "environment": result.environment,
         "written": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -84,6 +85,7 @@ def render_receipt(result: RunResult) -> str:
 - **verdict:** {result.verdict}
 - **paper_win:** {str(payload["paper_win"]).lower()}
 - **ping:** no
+- **scout_mode:** {result.scout_mode}
 - **topic:** {result.topic}
 - **environment:** {result.environment}
 - **written:** {payload["written"]}

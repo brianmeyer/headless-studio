@@ -24,9 +24,14 @@ def main(argv: list[str] | None = None) -> int:
         default="receipts/latest.md",
         help="Markdown receipt path (default: receipts/latest.md)",
     )
+    parser.add_argument(
+        "--signals",
+        default=None,
+        help="Optional local JSON signal dump (read-only, no HTTP)",
+    )
     args = parser.parse_args(argv)
 
-    result = run(topic=args.topic, out_path=Path(args.out))
+    result = run(topic=args.topic, out_path=Path(args.out), signals_path=args.signals)
     print(result.verdict)
     print(result.receipt_path)
     if result.json_path:

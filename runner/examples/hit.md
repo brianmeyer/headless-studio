@@ -7,9 +7,10 @@ Paper-win hit. One buyer-facing promise recorded. No ping. Nothing was posted, l
 - **verdict:** hit
 - **paper_win:** true
 - **ping:** no
+- **scout_mode:** local_file
 - **topic:** chatgpt prompts for property managers
 - **environment:** development
-- **written:** 2026-08-14T21:03:24Z
+- **written:** 2026-08-14T21:06:53Z
 
 ## Buyer-facing promise (draft only)
 

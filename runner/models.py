@@ -83,4 +83,5 @@ class RunResult:
     clues: tuple[str, ...]
     receipt_path: Path
     json_path: Path | None = None
+    scout_mode: str = "fixtures"
     notes: list[str] = field(default_factory=list)

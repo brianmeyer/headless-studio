@@ -7,9 +7,10 @@ Paper-win miss. Scouted one buyer-facing promise and stopped. No ping. Silence u
 - **verdict:** miss
 - **paper_win:** false
 - **ping:** no
+- **scout_mode:** fixtures
 - **topic:** chatgpt prompts for property managers
 - **environment:** development
-- **written:** 2026-08-14T21:03:23Z
+- **written:** 2026-08-14T21:06:53Z
 
 ## Buyer-facing promise (draft only)
 
