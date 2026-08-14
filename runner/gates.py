@@ -32,9 +32,8 @@ def promise_matches_sources(
     if not signals:
         return False, "no sources to read"
 
+    # Gate 4 reads source text only — not attached pain_points metadata.
     corpus_text = " ".join(s.text for s in signals)
-    for signal in signals:
-        corpus_text += " " + " ".join(signal.pain_points)
     corpus = content_words(corpus_text)
 
     promise_text = " ".join(
@@ -59,15 +58,23 @@ def promise_matches_sources(
         )
 
     if promise.pain_addressed:
-        pain_blob = corpus_text.lower()
-        matched_pain = any(
-            any(word in pain_blob for word in content_words(pain))
-            for pain in promise.pain_addressed
-        )
-        if not matched_pain:
+        if not any(_pain_supported(pain, corpus, corpus_text) for pain in promise.pain_addressed):
             return False, "promised pain is not in the sources"
 
     return True, f"{len(overlap)} promise words appear in sources"
+
+
+def _pain_supported(pain: str, corpus_words: set[str], corpus_text: str) -> bool:
+    """Need real coverage of the claimed pain, not one shared generic noun."""
+    words = content_words(pain)
+    if not words:
+        return False
+    overlap = words & corpus_words
+    if len(words) >= 2:
+        return len(overlap) >= 2
+    phrase = " ".join(pain.lower().split())
+    normalized = " ".join(corpus_text.lower().split())
+    return len(phrase.split()) >= 2 and phrase in normalized
 
 
 def evaluate_gates(

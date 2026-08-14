@@ -130,3 +130,31 @@ def test_fixture_clues_do_not_count_in_mixed_run():
     assert clues is not None
     assert clues.passed is False
     assert not report.all_passed
+
+
+def test_generic_overlap_without_pain_fails_gate_four():
+    """Audience/product words without the claimed pain must not pass gate 4."""
+    signals = [
+        Signal(
+            id=f"g-{i}",
+            source="x",
+            text="Office hours directory: property managers catalogue one prompt pack.",
+            url=f"https://x.com/example/status/{4000 + i}",
+            fixture=False,
+            engagement=40,
+            relevance=0.7,
+        )
+        for i in range(5)
+    ]
+    promise = Promise(
+        title="For property managers: stop wasting hours on listing copy",
+        description="A prompt pack for property managers.",
+        audience="property managers",
+        product_type="prompt pack",
+        pain_addressed=("wasting hours",),
+        bullets=("prompt pack",),
+        topic="chatgpt prompts for property managers",
+    )
+    ok, detail = promise_matches_sources(promise, signals)
+    assert ok is False
+    assert "pain" in detail or "not" in detail
