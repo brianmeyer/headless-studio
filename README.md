@@ -5,12 +5,10 @@
 One-shot scout → one buyer-facing promise → score → local markdown + JSON receipt → exit.
 
 ```bash
-python3 -m green
-python3 -m green --fixtures
-ENVIRONMENT=development python -m runner
+cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green
 ```
 
-Same pipeline, two entries. Silence: writes `miss` unless all four paper-win gates pass. No secrets in development. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
+Keys missing: public Reddit / Gumroad discover HTTP, then fixtures, still **miss**. Fixtures never count as sourced. Four gates. No mock on miss. Pepper crons that command Monday 8:15am ET. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
 
 Still Red (not this slice): first post, listing, dollar, buyer conversation.
 

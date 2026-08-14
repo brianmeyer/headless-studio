@@ -18,11 +18,12 @@ def test_default_run_writes_miss_markdown_and_json(tmp_path: Path, monkeypatch):
     monkeypatch.delenv("SUPABASE_URL", raising=False)
     monkeypatch.setenv("ENVIRONMENT", "development")
     receipt = tmp_path / "receipt.md"
-    result = run(out_path=receipt)
+    result = run(out_path=receipt, use_fixtures=True)
     assert result.verdict == "miss"
     text = receipt.read_text(encoding="utf-8")
     assert "miss" in text
     assert "ping:** no" in text
+    assert "never sourced" in text
     for item in STILL_RED:
         assert item in text
     assert not (tmp_path / "mocks").exists()
@@ -30,8 +31,21 @@ def test_default_run_writes_miss_markdown_and_json(tmp_path: Path, monkeypatch):
     assert payload["verdict"] == "miss"
     assert payload["paper_win"] is False
     assert payload["ping"] is False
+    assert payload["fixtures_count_as_sourced"] is False
     assert payload["still_red"] == list(STILL_RED)
     assert all(s.fixture for s in result.signals)
+
+
+def test_http_failure_falls_back_to_fixtures_and_misses(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "development")
+    monkeypatch.setattr("runner.live.http_get", lambda url, timeout=12.0: (0, "URLError: blocked"))
+    receipt = tmp_path / "receipt.md"
+    result = run(out_path=receipt)
+    assert result.verdict == "miss"
+    assert all(s.fixture for s in result.signals)
+    assert not (tmp_path / "mocks").exists()
+    text = receipt.read_text(encoding="utf-8")
+    assert "fixtures" in text.lower()
 
 
 def test_sourced_canned_run_writes_hit_receipt_only(tmp_path: Path):
@@ -55,7 +69,7 @@ def test_sourced_canned_run_writes_hit_receipt_only(tmp_path: Path):
 def test_main_one_liner_writes_miss(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("ENVIRONMENT", "development")
-    code = main(["--out", "receipts/latest.md"])
+    code = main(["--fixtures", "--out", "receipts/latest.md"])
     assert code == 0
     captured = capsys.readouterr()
     assert "miss" in captured.out

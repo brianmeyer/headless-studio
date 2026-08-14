@@ -15,8 +15,19 @@ STILL_RED = (
     "buyer conversation",
 )
 
+HOW_TO_RUN = (
+    "cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green"
+)
+
+
+def _signal_counts(result: RunResult) -> dict[str, int]:
+    live = sum(1 for s in result.signals if not s.fixture)
+    fixtures = sum(1 for s in result.signals if s.fixture)
+    return {"live": live, "fixtures": fixtures, "total": len(result.signals)}
+
 
 def receipt_payload(result: RunResult) -> dict:
+    counts = _signal_counts(result)
     return {
         "verdict": result.verdict,
         "paper_win": result.verdict == "hit",
@@ -24,6 +35,10 @@ def receipt_payload(result: RunResult) -> dict:
         "topic": result.topic,
         "environment": result.environment,
         "written": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "how_to_run": HOW_TO_RUN,
+        "scout_notes": list(result.notes),
+        "signal_counts": counts,
+        "fixtures_count_as_sourced": False,
         "promise": {
             "text": result.promise.title,
             "description": result.promise.description,
@@ -49,6 +64,7 @@ def receipt_payload(result: RunResult) -> dict:
 
 def render_receipt(result: RunResult) -> str:
     payload = receipt_payload(result)
+    counts = payload["signal_counts"]
     gates_table = "\n".join(
         f"| {check.name} | {'pass' if check.passed else 'fail'} | {check.detail} |"
         for check in result.gates.checks
@@ -61,12 +77,13 @@ def render_receipt(result: RunResult) -> str:
     clues = "\n".join(f"- {clue}" for clue in result.clues) or "- (none)"
     sources = "\n".join(f"- {url}" for url in result.score.source_urls) or "- (none)"
     red = "\n".join(f"- {item}" for item in STILL_RED)
+    notes = "\n".join(f"- {note}" for note in result.notes) or "- (none)"
 
     if result.verdict == "miss":
         headline = "miss"
         summary = (
             "Paper-win miss. Scouted one buyer-facing promise and stopped. "
-            "No ping. Silence unless all four gates pass."
+            "No ping. Silence unless all four gates pass. No mock on miss."
         )
     else:
         headline = "hit"
@@ -87,6 +104,13 @@ def render_receipt(result: RunResult) -> str:
 - **topic:** {result.topic}
 - **environment:** {result.environment}
 - **written:** {payload["written"]}
+- **how to run:** `{HOW_TO_RUN}`
+- **live signals:** {counts["live"]}
+- **fixture signals:** {counts["fixtures"]} (never sourced)
+
+## Scout
+
+{notes}
 
 ## Buyer-facing promise (draft only)
 
@@ -108,7 +132,7 @@ def render_receipt(result: RunResult) -> str:
 - **total:** {result.score.total}
 - **demand:** {result.score.demand}
 - **intent:** {result.score.intent}
-- **competition:** {result.score.competition} (default; no Gumroad HTTP)
+- **competition:** {result.score.competition}
 - **confidence:** {result.score.confidence}
 
 ## Pain / intent clues
