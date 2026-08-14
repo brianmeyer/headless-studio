@@ -92,13 +92,17 @@ def draft_promise(
 
     product_type = infer_product_type(signals, topic)
     audience = infer_audience(signals, topic)
-    title = f"{_topic_title(topic)} {TYPE_LABELS[product_type]}"
+    type_label = TYPE_LABELS[product_type].lower()
     if pains:
-        description = f"Helps {audience} with: {', '.join(pains[:3])}."
+        lead = pains[0]
+        title = f"For {audience}: stop {lead} with one {type_label}."
+        description = f"One {type_label} so {audience} can handle {', '.join(pains[:3])}."
     else:
-        description = f"A {product_type.replace('_', ' ')} for {audience} based on scouted demand."
+        topic_label = _topic_title(topic)
+        title = f"For {audience}: one {type_label} for {topic_label.lower()}."
+        description = f"One {type_label} for {audience}."
 
-    bullets = tuple(pains[:4] or clues[:4] or (f"Practical {product_type.replace('_', ' ')} for {audience}",))
+    bullets = tuple(pains[:4] or clues[:4] or (f"One {type_label} for {audience}",))
     return Promise(
         title=title,
         description=description,

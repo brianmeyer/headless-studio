@@ -82,5 +82,5 @@ class RunResult:
     signals: tuple[Signal, ...]
     clues: tuple[str, ...]
     receipt_path: Path
-    mock_path: Path | None = None
+    json_path: Path | None = None
     notes: list[str] = field(default_factory=list)

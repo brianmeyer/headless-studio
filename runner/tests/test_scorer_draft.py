@@ -12,11 +12,11 @@ from runner.scorer import score_promise
 def test_draft_one_promise_from_canned_sourced_signals():
     signals = sourced_hit_signals()
     promise = draft_promise(signals, topic="chatgpt prompts for property managers")
-    assert promise.title
+    assert promise.title.startswith("For property managers:")
     assert promise.product_type == "prompt_pack"
     assert promise.audience == "property managers"
     assert promise.pain_addressed
-    assert "property" in promise.description.lower() or "listing" in promise.description.lower() or promise.pain_addressed
+    assert "property" in promise.description.lower() or promise.pain_addressed
 
 
 def test_score_canned_sourced_signals_is_medium_over_60():
@@ -66,5 +66,6 @@ def test_empty_signals_score_zero():
 def test_draft_uses_topic_when_signals_are_thin():
     promise = draft_promise([], topic="notion templates for coaches")
     assert isinstance(promise, Promise)
-    assert "Notion" in promise.title or "Coaches" in promise.title
+    assert "notion" in promise.title.lower() or "coach" in promise.title.lower()
     assert promise.product_type in {"template_pack", "guide"}
+    assert promise.title.startswith("For ")

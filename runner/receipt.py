@@ -1,21 +1,54 @@
-"""Write a local markdown receipt and, on hit only, a static mock page."""
+"""Write a local markdown + JSON receipt. Record hit/miss. Do not ping anyone."""
 
 from __future__ import annotations
 
-import html
-import re
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 from runner.models import RunResult
 
+STILL_RED = (
+    "first post",
+    "listing",
+    "dollar",
+    "buyer conversation",
+)
 
-def _slug(text: str) -> str:
-    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
-    return slug[:60] or "promise"
+
+def receipt_payload(result: RunResult) -> dict:
+    return {
+        "verdict": result.verdict,
+        "paper_win": result.verdict == "hit",
+        "ping": False,
+        "topic": result.topic,
+        "environment": result.environment,
+        "written": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "promise": {
+            "text": result.promise.title,
+            "description": result.promise.description,
+            "audience": result.promise.audience,
+            "product_type": result.promise.product_type,
+        },
+        "score": {
+            "total": result.score.total,
+            "demand": result.score.demand,
+            "intent": result.score.intent,
+            "competition": result.score.competition,
+            "confidence": result.score.confidence,
+            "source_urls": list(result.score.source_urls),
+        },
+        "gates": [
+            {"name": c.name, "passed": c.passed, "detail": c.detail}
+            for c in result.gates.checks
+        ],
+        "clues": list(result.clues),
+        "still_red": list(STILL_RED),
+    }
 
 
 def render_receipt(result: RunResult) -> str:
+    payload = receipt_payload(result)
     gates_table = "\n".join(
         f"| {check.name} | {'pass' if check.passed else 'fail'} | {check.detail} |"
         for check in result.gates.checks
@@ -27,21 +60,20 @@ def render_receipt(result: RunResult) -> str:
         signal_lines.append(f"- [{kind}] {signal.id}: {snippet}")
     clues = "\n".join(f"- {clue}" for clue in result.clues) or "- (none)"
     sources = "\n".join(f"- {url}" for url in result.score.source_urls) or "- (none)"
-    mock_line = (
-        f"Written to `{result.mock_path}` (local only, not published)."
-        if result.mock_path
-        else "Not written. Misses do not get a mock."
-    )
+    red = "\n".join(f"- {item}" for item in STILL_RED)
 
     if result.verdict == "miss":
         headline = "miss"
         summary = (
-            "Scouted one product promise and stopped. "
-            "Silence unless all four gates pass."
+            "Paper-win miss. Scouted one buyer-facing promise and stopped. "
+            "No ping. Silence unless all four gates pass."
         )
     else:
         headline = "hit"
-        summary = "All four gates passed. Local static mock written. Nothing was published."
+        summary = (
+            "Paper-win hit. One buyer-facing promise recorded. "
+            "No ping. Nothing was posted, listed, or sold."
+        )
 
     return f"""# Receipt
 
@@ -50,22 +82,26 @@ def render_receipt(result: RunResult) -> str:
 {summary}
 
 - **verdict:** {result.verdict}
+- **paper_win:** {str(payload["paper_win"]).lower()}
+- **ping:** no
 - **topic:** {result.topic}
 - **environment:** {result.environment}
-- **written:** {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+- **written:** {payload["written"]}
+
+## Buyer-facing promise (draft only)
+
+{result.promise.title}
+
+{result.promise.description}
+
+- **audience:** {result.promise.audience}
+- **type:** {result.promise.product_type}
 
 ## Gates
 
 | Gate | Result | Detail |
 | --- | --- | --- |
 {gates_table}
-
-## Promise (draft only)
-
-- **title:** {result.promise.title}
-- **type:** {result.promise.product_type}
-- **audience:** {result.promise.audience}
-- **description:** {result.promise.description}
 
 ## Score
 
@@ -87,54 +123,20 @@ def render_receipt(result: RunResult) -> str:
 
 {chr(10).join(signal_lines) if signal_lines else "- (none)"}
 
-## Static mock
+## Still Red
 
-{mock_line}
+{red}
 """
-
-
-def write_static_mock(result: RunResult, mock_dir: Path) -> Path:
-    mock_dir.mkdir(parents=True, exist_ok=True)
-    path = mock_dir / "index.html"
-    bullets = "\n".join(
-        f"        <li>{html.escape(bullet)}</li>" for bullet in result.promise.bullets
-    )
-    path.write_text(
-        f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>{html.escape(result.promise.title)} — local mock</title>
-  <style>
-    body {{ font-family: sans-serif; max-width: 40rem; margin: 2rem auto; color: #111; }}
-    .banner {{ background: #111; color: #fff; padding: 0.4rem 0.7rem; font-size: 0.8rem; }}
-    h1 {{ margin-top: 1.5rem; }}
-  </style>
-</head>
-<body>
-  <p class="banner">LOCAL STATIC MOCK — not listed, not deployed, not for sale</p>
-  <h1>{html.escape(result.promise.title)}</h1>
-  <p>{html.escape(result.promise.description)}</p>
-  <p>For {html.escape(result.promise.audience)}.</p>
-  <ul>
-{bullets}
-  </ul>
-  <p>Score {result.score.total} ({result.score.confidence}). Receipt: {html.escape(str(result.receipt_path))}.</p>
-</body>
-</html>
-""",
-        encoding="utf-8",
-    )
-    return path
 
 
 def write_outputs(result: RunResult, receipt_path: Path) -> RunResult:
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    if result.verdict == "hit":
-        mock_dir = receipt_path.parent / "mocks" / _slug(result.promise.title)
-        result.mock_path = write_static_mock(result, mock_dir)
-    else:
-        result.mock_path = None
-    receipt_path.write_text(render_receipt(result), encoding="utf-8")
+    json_path = receipt_path.with_suffix(".json")
+    result.json_path = json_path
     result.receipt_path = receipt_path
+    receipt_path.write_text(render_receipt(result), encoding="utf-8")
+    json_path.write_text(
+        json.dumps(receipt_payload(result), indent=2) + "\n",
+        encoding="utf-8",
+    )
     return result

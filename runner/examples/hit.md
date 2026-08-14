@@ -2,12 +2,23 @@
 
 hit
 
-All four gates passed. Local static mock written. Nothing was published.
+Paper-win hit. One buyer-facing promise recorded. No ping. Nothing was posted, listed, or sold.
 
 - **verdict:** hit
+- **paper_win:** true
+- **ping:** no
 - **topic:** chatgpt prompts for property managers
 - **environment:** development
-- **written:** 2026-08-14T20:56:53Z
+- **written:** 2026-08-14T21:03:24Z
+
+## Buyer-facing promise (draft only)
+
+For property managers: stop wasting hours rewriting listing descriptions with one prompt pack.
+
+One prompt pack so property managers can handle wasting hours rewriting listing descriptions, tenant notices inconsistent, starting from scratch.
+
+- **audience:** property managers
+- **type:** prompt_pack
 
 ## Gates
 
@@ -16,14 +27,7 @@ All four gates passed. Local static mock written. Nothing was published.
 | sourced_signals | pass | 8 sourced non-fixture signals (need ≥5) |
 | pain_intent_clues | pass | 27 pain/intent clues, hype excluded (need ≥3) |
 | score_medium_sources | pass | score 77.8 (medium), 8 source URLs (need >60, medium+, sources) |
-| promise_matches_sources | pass | 23 promise words appear in sources |
-
-## Promise (draft only)
-
-- **title:** ChatGPT Prompts Property Managers Prompt Pack
-- **type:** prompt_pack
-- **audience:** property managers
-- **description:** Helps property managers with: wasting hours rewriting listing descriptions, tenant notices inconsistent, starting from scratch.
+| promise_matches_sources | pass | 21 promise words appear in sources |
 
 ## Score
 
@@ -85,6 +89,9 @@ All four gates passed. Local static mock written. Nothing was published.
 - [x] x-4: Can't find prompts that mention actual lease clauses. Generic ChatGPT output is useless for property managers.
 - [reddit] rd-4: Overwhelmed writing owner reports every Friday. Would pay for a guide with prompts I can paste into ChatGPT.
 
-## Static mock
+## Still Red
 
-Written to `receipts/mocks/chatgpt-prompts-property-managers-prompt-pack/index.html` (local only, not published).
+- first post
+- listing
+- dollar
+- buyer conversation

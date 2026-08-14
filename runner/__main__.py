@@ -13,9 +13,9 @@ from runner.pipeline import run
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "One-shot read-only scout → one product promise → score → "
-            "local receipt. Writes miss and stops unless all four gates pass. "
-            "No secrets required in development."
+            "One-shot read-only scout → one buyer-facing promise → score → "
+            "local markdown/JSON receipt. Writes miss and stops unless all "
+            "four paper-win gates pass. No secrets in development. No ping."
         )
     )
     parser.add_argument("--topic", default=DEFAULT_TOPIC, help="Topic to scout")
@@ -29,8 +29,8 @@ def main(argv: list[str] | None = None) -> int:
     result = run(topic=args.topic, out_path=Path(args.out))
     print(result.verdict)
     print(result.receipt_path)
-    if result.mock_path:
-        print(result.mock_path)
+    if result.json_path:
+        print(result.json_path)
     return 0
 
 

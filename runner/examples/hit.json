@@ -1,0 +1,88 @@
+{
+  "verdict": "hit",
+  "paper_win": true,
+  "ping": false,
+  "topic": "chatgpt prompts for property managers",
+  "environment": "development",
+  "written": "2026-08-14T21:03:24Z",
+  "promise": {
+    "text": "For property managers: stop wasting hours rewriting listing descriptions with one prompt pack.",
+    "description": "One prompt pack so property managers can handle wasting hours rewriting listing descriptions, tenant notices inconsistent, starting from scratch.",
+    "audience": "property managers",
+    "product_type": "prompt_pack"
+  },
+  "score": {
+    "total": 77.8,
+    "demand": 46.8,
+    "intent": 36.0,
+    "competition": -5.0,
+    "confidence": "medium",
+    "source_urls": [
+      "https://x.com/example/status/1001",
+      "https://x.com/example/status/1002",
+      "https://reddit.com/r/PropertyManagement/comments/aaa111",
+      "https://reddit.com/r/realestate/comments/bbb222",
+      "https://x.com/example/status/1003",
+      "https://reddit.com/r/PropertyManagement/comments/ccc333",
+      "https://x.com/example/status/1004",
+      "https://reddit.com/r/smallbusiness/comments/ddd444"
+    ]
+  },
+  "gates": [
+    {
+      "name": "sourced_signals",
+      "passed": true,
+      "detail": "8 sourced non-fixture signals (need \u22655)"
+    },
+    {
+      "name": "pain_intent_clues",
+      "passed": true,
+      "detail": "27 pain/intent clues, hype excluded (need \u22653)"
+    },
+    {
+      "name": "score_medium_sources",
+      "passed": true,
+      "detail": "score 77.8 (medium), 8 source URLs (need >60, medium+, sources)"
+    },
+    {
+      "name": "promise_matches_sources",
+      "passed": true,
+      "detail": "21 promise words appear in sources"
+    }
+  ],
+  "clues": [
+    "wasting hours rewriting listing descriptions",
+    "need a prompt pack",
+    "I keep wasting hours rewriting listing descriptions. Need a prompt pack that actually works for property managers.",
+    "tenant notices inconsistent",
+    "starting from scratch",
+    "how do I keep the tone consistent?",
+    "Tenant notices are a mess. How do I keep the tone consistent without starting from scratch every time?",
+    "renewal letters don't work",
+    "looking for ChatGPT prompts",
+    "Looking for ChatGPT prompts for renewal letters. Current ones don't work and residents get confused.",
+    "manual copy-paste takes hours",
+    "miss units on follow-up",
+    "would pay for a checklist plus prompts",
+    "Frustrated with showing follow-ups. Manual copy-paste takes hours and I still miss units.",
+    "maintenance updates sound like a robot",
+    "wish there was a prompt pack",
+    "Wish there was a prompt pack for maintenance updates that doesn't sound like a robot. Tired of rewriting from scratch.",
+    "delinquency tone too harsh or too soft",
+    "need help staying firm",
+    "anyone know a template plus prompt combo?",
+    "Anyone know a template + prompt combo for delinquency notices? Need help staying firm without sounding cruel.",
+    "can't find prompts that mention lease clauses",
+    "looking for property-manager-specific prompts",
+    "Can't find prompts that mention actual lease clauses. Generic ChatGPT output is useless for property managers.",
+    "overwhelmed writing owner reports",
+    "would pay for a guide with prompts",
+    "Overwhelmed writing owner reports every Friday. Would pay for a guide with prompts I can paste into ChatGPT."
+  ],
+  "still_red": [
+    "first post",
+    "listing",
+    "dollar",
+    "buyer conversation"
+  ]
+}
