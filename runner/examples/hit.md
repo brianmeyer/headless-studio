@@ -2,23 +2,37 @@
 
 hit
 
-Paper-win hit. One buyer-facing promise recorded. No ping. Nothing was posted, listed, or sold.
+Paper-win hit. One draft promise recorded. No ping. Nothing was posted, listed, or sold.
 
 - **verdict:** hit
 - **paper_win:** true
+- **packet:** NOT APPROVED
+- **published:** no
 - **ping:** no
 - **topic:** chatgpt prompts for property managers
 - **environment:** development
-- **written:** 2026-08-14T23:23:35Z
+- **written:** 2026-08-14T23:51:00Z
 - **how to run:** `cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green`
 - **live signals:** 8
 - **fixture signals:** 0 (never sourced)
 
+## Scout input
+
+- **topic:** chatgpt prompts for property managers — scout target only — not a SKU, not DEFAULT_TOPIC
+- **query:** chatgpt prompts for property managers
+- **direction:** (none)
+- **out of scope:** (none recorded)
+
 ## Scout
 
+- scout input: chatgpt prompts for property managers (scout target only — not a SKU)
 - scout skipped: signals provided
+- packet: NOT APPROVED draft from 8 sourced rows
+- NOT APPROVED: nothing published, listed, or posted
 
-## Buyer-facing promise (draft only)
+## Packet draft (NOT APPROVED)
+
+NOT APPROVED — draft only, not a SKU. Nothing was published, listed, posted, or sold.
 
 For property managers: stop wasting hours rewriting listing descriptions with one prompt pack.
 
@@ -26,6 +40,7 @@ One prompt pack so property managers can handle wasting hours rewriting listing 
 
 - **audience:** property managers
 - **type:** prompt_pack
+- **drafts:** `packet/etsy_small_shop_monthly_books` (NOT APPROVED)
 
 ## Gates
 

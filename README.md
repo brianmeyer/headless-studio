@@ -2,13 +2,15 @@
 
 ## Green runner (Vera locked)
 
-One-shot scout → one buyer-facing promise → score → local markdown + JSON receipt → exit.
+One-shot scout → at most one draft promise → score → local markdown + JSON receipt → exit.
 
 ```bash
 cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green
 ```
 
-Keys missing: public Reddit / Gumroad discover HTTP, then fixtures, still **miss**. Fixtures never count as sourced. Four gates. No mock on miss. Pepper crons that command Monday 8:15am ET. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
+Scout path, keys optional: **Tavily Reddit** (`TAVILY_API_KEY` from the process env, else that one key out of `~/.hermes/.env`, else it says it fell back — never printed), then the public Reddit JSON hop (403 without auth is expected and **not retried**), then **Gumroad discover plus each product page** where pain/intent comes from the page text or not at all. No live sourced rows means fixtures, and fixtures **never** count as sourced. Four gates. No mock on miss. Pepper crons that command Monday 8:15am ET. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
+
+Every packet is **NOT APPROVED**, hit or miss: nothing is published, listed, posted, or sold, and nothing is drafted from fixtures. The scouted topic is a search target in `runner/topics/`, not a SKU. Current drafts live in [packet/etsy_small_shop_monthly_books](packet/etsy_small_shop_monthly_books) — a four-tab workbook skeleton, a listing draft, and post drafts, all `NOT APPROVED`.
 
 Still Red (not this slice): first post, listing, dollar, buyer conversation.
 

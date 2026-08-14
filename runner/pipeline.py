@@ -49,7 +49,10 @@ def run(
         topic = spec.topic
         query = spec.search_text
     else:
+        # An explicit --topic replaces the file's target, so the receipt must not
+        # keep reporting the file's direction as if it were scouted.
         query = topic
+        spec = ScoutInput(topic=topic, query=topic, path="--topic override")
 
     notes: list[str] = []
     if spec.topic:
