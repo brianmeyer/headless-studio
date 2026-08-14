@@ -36,7 +36,7 @@ ENVIRONMENT=development python3 -m runner --topic "etsy shop bookkeeping" --out 
 
 1. **Tavily Reddit** if a key resolves — process env `TAVILY_API_KEY`, else `TAVILY_API_KEY` alone out of `~/.hermes/.env`, else a note saying it fell back. The key is never printed, logged, or written to a receipt, and no other key in that file is read.
 2. **Public Reddit search JSON** as an optional extra hop. Unauthenticated Reddit answers 403; that status is recorded once and **not retried** — no extra headers, no old.reddit, no oauth, no Reddit API credentials. Tavily is the Reddit path that can work.
-3. **Gumroad discover, then each product page** (capped at 8, same read-only GET). Pain/intent is attached only when the **page text** says it, and enough page text is folded into the signal so gate 4 can read it. A product title is not pain. A failed page GET keeps the discover row as sourced competition with no invented pain.
+3. **Gumroad discover, then each product page** (capped at 8, same read-only GET). Pain/intent is attached only when the **page text** says it, quoted as a whole sentence, and enough page text is folded into the signal so gate 4 can read it. A product title is not pain, and neither is a seller answering their own FAQ. A failed page GET keeps the discover row as sourced competition with no invented pain.
 4. Zero live sourced rows falls back to fixtures.
 5. Still **miss** unless the four gates pass on **sourced** rows.
 6. Fixture rows are marked `fixture=true` and **never** count as sourced.

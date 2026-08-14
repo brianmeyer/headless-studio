@@ -107,9 +107,10 @@ def test_gumroad_product_page_with_pain_sets_pain_points(monkeypatch):
     assert len(enriched) == 2
     for signal in enriched:
         assert signal.pain_points
-        assert "wasting hours" in " ".join(signal.pain_points)
+        # The quote is a sentence the page actually wrote.
+        assert "can't tell what they earned" in " ".join(signal.pain_points)
         # Gate 4 reads signal.text, so the page words have to land there too.
-        assert "wasting hours" in signal.text
+        assert "can't tell what they earned" in signal.text
         assert signal.fixture is False
     assert any("→ 200" in note for note in notes)
 
@@ -126,6 +127,36 @@ def test_gumroad_product_page_without_pain_has_no_pain_points(monkeypatch):
         assert signal.pain_points == ()
         assert signal.buying_signals == ()
         assert signal.url.startswith("https://")
+
+
+def test_gumroad_page_faq_is_not_buyer_pain(monkeypatch):
+    """A seller answering their own FAQ says "how do I" without being in pain."""
+    faq_page = (
+        "<html><body><h1>Bookkeeping Tracker</h1>"
+        "<p>Instant download. Google Sheets and Excel.</p>"
+        "<p>FAQs: Q: How do I access the Google Sheets version? "
+        "A: You will receive a PDF in the ZIP file.</p>"
+        "</body></html>"
+    )
+    monkeypatch.setattr("runner.live.http_get", lambda url, timeout=12.0: (200, faq_page))
+    discovered = parse_gumroad_discover(_gumroad_html(1))
+    enriched, _ = fetch_gumroad_pages(discovered)
+    assert enriched[0].pain_points == ()
+    assert "Bookkeeping Tracker" in enriched[0].text
+
+
+def test_gumroad_page_pain_is_quoted_as_a_sentence(monkeypatch):
+    page = (
+        "<html><body><h1>Shop Books</h1>"
+        "<p>Instant download. Sellers tell me they can't see profit per order "
+        "and give up halfway through the month. Works in Excel.</p>"
+        "</body></html>"
+    )
+    monkeypatch.setattr("runner.live.http_get", lambda url, timeout=12.0: (200, page))
+    enriched, _ = fetch_gumroad_pages(parse_gumroad_discover(_gumroad_html(1)))
+    pain = enriched[0].pain_points[0]
+    assert pain.startswith("Sellers tell me")
+    assert pain.endswith("month.")
 
 
 def test_gumroad_page_failure_keeps_sourced_row_without_pain(monkeypatch):

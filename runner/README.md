@@ -21,7 +21,7 @@ Writes (via `python3 -m runner`):
 
 1. **Tavily Reddit** — `TAVILY_API_KEY` from the process env, else that one key out of `~/.hermes/.env`, else a note that it fell back. Optional, never required, never printed. `include_domains: ["reddit.com"]` plus `site:reddit.com` in the query, stdlib `urllib`, no SDK.
 2. **Public Reddit JSON** — an extra hop. 403 without auth is expected, recorded once, and **not retried**.
-3. **Gumroad discover + product pages** — up to 8 pages, read-only. Pain/intent only if the page text says it; a product title is not pain. A failed page GET stays sourced competition with no invented pain.
+3. **Gumroad discover + product pages** — up to 8 pages, read-only. Pain/intent only if the page text says it, quoted as a sentence; a product title is not pain, and a seller's own FAQ ("Q: How do I…") is not pain either. A failed page GET stays sourced competition with no invented pain.
 4. No live sourced rows → fixtures → still a miss.
 
 Fixture rows never count as sourced, and live rows are never mixed with them. `--fixtures` skips HTTP and Tavily.

@@ -20,6 +20,7 @@ from runner.clues import (
     _buying_from_text,
     _pain_from_text,
     has_pain_intent,
+    pain_sentences,
     pain_window,
 )
 from runner.models import Signal
@@ -227,6 +228,7 @@ _META_DESC_RE = re.compile(
 _JSON_DESC_RE = re.compile(
     r'"(?:description|full_description|custom_summary)"\s*:\s*"((?:[^"\\]|\\.){8,}?)"'
 )
+_FAQ_RE = re.compile(r"\bfaqs?\b|\bq\s*:|\ba\s*:", re.I)
 
 
 def _json_string(raw: str) -> str:
@@ -253,9 +255,26 @@ def gumroad_page_text(html: str) -> str:
     return flat[:4000]
 
 
+def _seller_faq(sentence: str) -> bool:
+    """A seller answering their own FAQ is marketing copy, not a buyer in pain."""
+    return bool(_FAQ_RE.search(sentence))
+
+
+def _page_pain(page_text: str) -> str:
+    """The first pain sentence on the page that is not the seller's own FAQ."""
+    for sentence in pain_sentences(page_text, limit=6):
+        if not _seller_faq(sentence):
+            return sentence
+    return ""
+
+
 def _with_page_text(signal: Signal, page_text: str) -> Signal:
     """Fold page text into the row. Pain is attached only if the page says it."""
-    window = pain_window(page_text)
+    window = _page_pain(page_text)
+    if not window:
+        # Run-on pages have no sentence to quote; fall back to a window.
+        fallback = pain_window(page_text)
+        window = "" if _seller_faq(fallback) else fallback
     snippet = window or " ".join(page_text.split())[:PAGE_SNIPPET_CHARS]
     if not snippet:
         return signal

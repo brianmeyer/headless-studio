@@ -7,7 +7,8 @@
 topic: etsy_small_shop_monthly_books
 
 # What the scout actually searches (Tavily Reddit + public Reddit + Gumroad).
-query: etsy small shop bookkeeping spreadsheet google sheets excel monthly profit and loss
+# Keep it short: Gumroad discover returns nothing for a long sentence.
+query: etsy shop bookkeeping spreadsheet
 
 # Direction for the packet draft. Read as scope, not as approved copy.
 hint: Google Sheets + Excel monthly books for a non-technical Etsy/small-shop seller — paste sales/fees, expenses, tax-ready P&L, not QuickBooks.

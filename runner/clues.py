@@ -91,6 +91,26 @@ def _buying_from_text(text: str) -> tuple[str, ...]:
     return tuple(found)
 
 
+def pain_sentences(text: str, limit: int = 3) -> tuple[str, ...]:
+    """
+    Whole sentences that carry pain/intent language, in the order they appear.
+
+    Quoting a sentence keeps the receipt readable and keeps gate 4 checking words
+    the page actually put next to each other.
+    """
+    flat = " ".join(text.split())
+    parts = re.split(r"(?<=[.!?])\s+|\s*[•|]\s*", flat)
+    found: list[str] = []
+    for part in parts:
+        candidate = part.strip()
+        if len(candidate) < 12 or not has_pain_intent(candidate):
+            continue
+        found.append(candidate[:240])
+        if len(found) >= limit:
+            break
+    return tuple(found)
+
+
 def pain_window(text: str, width: int = 240) -> str:
     """
     The earliest window of `text` around a pain/intent match.
