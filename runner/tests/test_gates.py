@@ -179,3 +179,17 @@ def test_fewer_than_three_clues_is_a_miss():
     assert clues is not None
     assert clues.passed is False
     assert not report.all_passed
+
+
+def test_mixed_fixtures_cannot_authorize_a_hit():
+    """Fixture pain/intent must not pass gates when sourced rows are weather-only."""
+    signals = _neutral_sourced() + fixture_signals()
+    promise = draft_promise(signals, "chatgpt prompts for property managers")
+    score = score_promise(signals, promise)
+    report = evaluate_gates(signals, promise, score)
+    clues = report.by_name("pain_intent_clues")
+    score_gate = report.by_name("score_medium_sources")
+    assert clues is not None and clues.passed is False
+    assert score_gate is not None and score_gate.passed is False
+    assert not report.all_passed
+    assert score.confidence == "low" or score.total <= 60

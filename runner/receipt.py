@@ -87,6 +87,14 @@ def render_receipt(result: RunResult) -> str:
 
 {chr(10).join(signal_lines) if signal_lines else "- (none)"}
 
+## How to re-run
+
+```bash
+python -m green --topic "{result.topic}" --out {result.receipt_path}
+```
+
+Equivalent: `python -m runner --topic "{result.topic}" --out {result.receipt_path}`
+
 ## Static mock
 
 {mock_line}

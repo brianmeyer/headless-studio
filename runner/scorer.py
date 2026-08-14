@@ -16,6 +16,12 @@ def sourced_signals(signals: list[Signal] | tuple[Signal, ...]) -> list[Signal]:
     return [s for s in signals if (not s.fixture) and _has_source_url(s)]
 
 
+def evidence_signals(signals: list[Signal] | tuple[Signal, ...]) -> list[Signal]:
+    """Signals that may authorize a hit. Fixtures never join once any sourced row exists."""
+    sourced = sourced_signals(signals)
+    return sourced if sourced else list(signals)
+
+
 def score_promise(
     signals: list[Signal] | tuple[Signal, ...],
     promise: Promise | None = None,
@@ -37,8 +43,9 @@ def score_promise(
             source_urls=(),
         )
 
-    demand = _demand(signals)
-    intent = _intent(signals)
+    evidence = evidence_signals(signals)
+    demand = _demand(evidence)
+    intent = _intent(evidence)
     competition = -5.0
     total = max(0.0, min(100.0, demand + intent + competition))
 

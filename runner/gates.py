@@ -6,7 +6,7 @@ import re
 
 from runner.clues import extract_clues
 from runner.models import GateCheck, GateReport, Promise, Score, Signal
-from runner.scorer import sourced_signals
+from runner.scorer import evidence_signals, sourced_signals
 
 STOP_WORDS = {
     "the", "a", "an", "is", "are", "for", "to", "of", "and", "or",
@@ -75,7 +75,8 @@ def evaluate_gates(
     score: Score,
 ) -> GateReport:
     sourced = sourced_signals(signals)
-    clues = extract_clues(signals)
+    evidence = evidence_signals(signals)
+    clues = extract_clues(evidence)
     # Gate 4 reads sourced text when any sourced rows exist.
     coherent, coherent_detail = promise_matches_sources(promise, sourced or list(signals))
 

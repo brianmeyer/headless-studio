@@ -23,6 +23,8 @@ def test_green_fixtures_cli_writes_miss(tmp_path: Path, monkeypatch, capsys):
     assert "miss" in text
     assert "first post" in text
     assert "NOT DONE" in text
+    assert "How to re-run" in text
+    assert "python -m green" in text
     assert not (tmp_path / "green" / "out" / "t" / "mocks").exists()
 
 
