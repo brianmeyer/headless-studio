@@ -25,7 +25,7 @@ python -m runner --signals runner/examples/sourced-signals.json
 
 Development never calls xAI, Gumroad, or Supabase. Missing APIs become fixtures. Fixture rows do not count as sourced.
 
-Review plan for the second model: `runner/PLAN.md`.
+Review plan for the second model: `runner/PLAN.md`. Checker notes (gpt5.6sol) live in that file and on the PR. No further Green expansion.
 
 ## Paper-win bar
 

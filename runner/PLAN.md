@@ -39,3 +39,7 @@ If any gate fails: write **miss** and exit.
 - buyer conversation
 - deploy / n8n / Railway / Pinterest / Gumroad publish / ads / MailerLite / auto-post / prod Supabase / SQLite-boot-as-the-product
 - merge `molly-improvements-20260203`
+
+## Checker notes (gpt5.6sol)
+
+Reserved for gpt5.6sol. Builder does not fill this in.
