@@ -1,5 +1,20 @@
 # Headless Studio
 
+## Green runner (Vera locked)
+
+One-shot scout → one buyer-facing promise → score → local markdown + JSON receipt → exit.
+
+```bash
+python3 -m green
+python3 -m green --fixtures
+ENVIRONMENT=development python -m runner
+```
+
+Same pipeline, two entries. Silence: writes `miss` unless all four paper-win gates pass. No secrets in development. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
+
+Still Red (not this slice): first post, listing, dollar, buyer conversation.
+
+
 Autonomous AI-powered digital product factory.
 
 ## Quick Start

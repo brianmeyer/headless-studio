@@ -9,6 +9,7 @@ Not a factory. No FastAPI, SQLite, post, listing, checkout, or ping.
 From the repo root, with no env keys:
 
 ```bash
+python3 -m green
 ENVIRONMENT=development python -m runner
 ```
 
@@ -40,7 +41,7 @@ A miss writes the word `miss` and exits.
 ## Tests
 
 ```bash
-PYTHONPATH=. python -m pytest runner/tests -v
+PYTHONPATH=. python -m pytest runner/tests tests/test_green_runner.py -v
 ```
 
 ## Sample receipts

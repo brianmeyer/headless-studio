@@ -51,8 +51,14 @@ jobs:
       - name: Receipt must say miss
         run: grep -q miss receipts/latest.md
 
-      - name: Runner tests
-        run: PYTHONPATH=. python -m pytest runner/tests -v --tb=short
+      - name: Run green entry with no secrets
+        run: ENVIRONMENT=development python -m green --fixtures --out green/out/ci/RECEIPT.md
+
+      - name: Green receipt must say miss
+        run: grep -q miss green/out/ci/RECEIPT.md
+
+      - name: Runner and green tests
+        run: PYTHONPATH=. python -m pytest runner/tests tests/test_green_runner.py -v --tb=short
 
   lint:
     runs-on: ubuntu-latest
