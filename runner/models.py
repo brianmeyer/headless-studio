@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from runner.scout_input import ScoutInput
+
 
 @dataclass(frozen=True)
 class Signal:
@@ -26,7 +28,7 @@ class Signal:
 
 @dataclass(frozen=True)
 class Promise:
-    """A single drafted product promise."""
+    """A single drafted product promise. Draft only — never an approved SKU."""
 
     title: str
     description: str
@@ -84,3 +86,10 @@ class RunResult:
     receipt_path: Path
     json_path: Path | None = None
     notes: list[str] = field(default_factory=list)
+    query: str = ""
+    scout_input: ScoutInput | None = None
+
+    @property
+    def drafted(self) -> bool:
+        """True when sourced rows produced a promise draft. A miss can be empty."""
+        return bool(self.promise.title.strip())

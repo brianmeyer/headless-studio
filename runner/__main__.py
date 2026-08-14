@@ -6,20 +6,25 @@ import argparse
 import sys
 from pathlib import Path
 
-from runner.fixtures import DEFAULT_TOPIC
 from runner.pipeline import run
+from runner.scout_input import SCOUT_TOPIC_FILE
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "One-shot read-only scout → one buyer-facing promise → score → "
+            "One-shot read-only scout → at most one draft promise → score → "
             "local markdown/JSON receipt. Writes miss and stops unless all "
-            "four paper-win gates pass. Public HTTP if present, else fixtures. "
-            "Fixtures never count as sourced. No ping."
+            "four paper-win gates pass. Tavily Reddit if a key resolves, public "
+            "HTTP, else fixtures. Fixtures never count as sourced. Every packet "
+            "is NOT APPROVED. No ping."
         )
     )
-    parser.add_argument("--topic", default=DEFAULT_TOPIC, help="Topic to scout")
+    parser.add_argument(
+        "--topic",
+        default=None,
+        help=f"Topic to scout (default: the scout input topic in {SCOUT_TOPIC_FILE.name})",
+    )
     parser.add_argument(
         "--out",
         default="receipts/latest.md",

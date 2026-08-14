@@ -1,0 +1,16 @@
+# Scout input only: not a SKU, not approved, not runner.fixtures.DEFAULT_TOPIC.
+# Vera picked this topic as a search target for a live scout. Nothing here is a
+# promise the runner is allowed to publish, list, or post.
+#
+# Format: key: value. Unknown keys are ignored.
+
+topic: etsy_small_shop_monthly_books
+
+# What the scout actually searches (Tavily Reddit + public Reddit + Gumroad).
+query: etsy small shop bookkeeping spreadsheet google sheets excel monthly profit and loss
+
+# Direction for the packet draft. Read as scope, not as approved copy.
+hint: Google Sheets + Excel monthly books for a non-technical Etsy/small-shop seller — paste sales/fees, expenses, tax-ready P&L, not QuickBooks.
+
+# Off the table this week.
+out_of_scope: prompt packs, PM/RE, Notion rental OS, Paper+Spark feature clone, manufacture this week
