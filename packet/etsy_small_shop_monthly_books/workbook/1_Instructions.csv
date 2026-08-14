@@ -1,0 +1,32 @@
+Monthly books for a small Etsy/shop seller,DRAFT — NOT APPROVED
+,
+What this workbook does,"Enter sales and fees, log expenses, and see a monthly profit and loss — without QuickBooks."
+Works in,Google Sheets and Excel. Nothing to install.
+Tabs,"Instructions, Sales & fees, Expenses, Monthly P&L. That is all four."
+,
+Step 1,Open the Sales & fees tab. One row per order.
+Step 2,"Paste Date, Order ID, gross sales, discounts, shipping charged, sales tax collected, fees, and refunds. Net to bank fills itself in."
+Step 3,Open the Expenses tab. One row per purchase. Pick a category from the list.
+Step 4,Open the Monthly P&L tab and type the first day of the month in cell B2 (for example 2026-01-01). Every total updates.
+,
+Dates,"Use real dates, not text. Type 2026-01-31 or use your local date format consistently."
+Sales tax collected,"Tracked as pass-through money. It is held for the state, so it is not counted as profit."
+Fees,"Marketplace fees, payment processing, and on-platform ads live on the Sales & fees tab so each order shows what it really paid out."
+Expenses,Off-platform costs live on the Expenses tab. Keep the category spelling identical to the Monthly P&L rows so the totals find them.
+Rows run out?,Copy the last row down. The formula in the Net to bank column copies with it.
+Formula shows as text?,Some CSV imports paste formulas as plain text. Retype the equals sign in that cell and it will calculate.
+,
+Not tax advice,"This is a bookkeeping worksheet, not tax, legal, or accounting advice, and it is not designed or reviewed by a CPA. Check your own numbers and ask a professional about your return."
+Status,"NOT APPROVED draft. No reviews, no bestseller claim, no comparison to any other shop's product, and no sales numbers."
+,
+Expense categories,Type these exactly on the Expenses tab
+Materials & supplies,
+Packaging & shipping supplies,
+Postage & labels,
+Software & subscriptions,
+Advertising off Etsy,
+Home office & utilities share,
+Mileage & travel,
+Professional services,
+Bank & payment fees,
+Other,
