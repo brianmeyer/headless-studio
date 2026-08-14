@@ -32,6 +32,28 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v --tb=short
 
+  runner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pytest
+        run: python -m pip install pytest
+
+      - name: Run runner with no secrets
+        run: ENVIRONMENT=development python -m runner --out receipts/latest.md
+
+      - name: Receipt must say miss
+        run: grep -q miss receipts/latest.md
+
+      - name: Runner tests
+        run: PYTHONPATH=. python -m pytest runner/tests -v --tb=short
+
   lint:
     runs-on: ubuntu-latest
     defaults:

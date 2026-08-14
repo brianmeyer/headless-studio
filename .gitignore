@@ -60,3 +60,10 @@ logs/
 # Supabase
 supabase/.branches/
 supabase/.temp/
+
+# Runner output (committed examples live under runner/examples/)
+receipts/latest.md
+receipts/latest.json
+receipts/run-*.md
+receipts/run-*.json
+receipts/mocks/
