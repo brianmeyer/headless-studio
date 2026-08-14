@@ -69,7 +69,8 @@ def _gumroad_discover_html(n: int = 6) -> str:
         for i in range(n)
     ]
     page = json.dumps({"search_results": {"total": n, "products": products}})
-    return f"<html><body>{page.replace('\"', '&quot;')}</body></html>"
+    escaped = page.replace('"', "&quot;")
+    return f"<html><body>{escaped}</body></html>"
 
 
 def test_parse_tavily_results_are_sourced_reddit_rows_with_pain():
