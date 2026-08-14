@@ -1,14 +1,37 @@
 {
   "verdict": "miss",
   "paper_win": false,
+  "approved": false,
+  "approval": "NOT APPROVED",
+  "published": false,
   "ping": false,
-  "topic": "chatgpt prompts for property managers",
+  "topic": "etsy_small_shop_monthly_books",
+  "query": "etsy small shop bookkeeping spreadsheet google sheets excel monthly profit and loss",
+  "scout_input": {
+    "topic": "etsy_small_shop_monthly_books",
+    "query": "etsy small shop bookkeeping spreadsheet google sheets excel monthly profit and loss",
+    "hint": "Google Sheets + Excel monthly books for a non-technical Etsy/small-shop seller \u2014 paste sales/fees, expenses, tax-ready P&L, not QuickBooks.",
+    "out_of_scope": [
+      "prompt packs",
+      "PM/RE",
+      "Notion rental OS",
+      "Paper+Spark feature clone",
+      "manufacture this week"
+    ],
+    "file": "/workspace/runner/topics/etsy_small_shop_monthly_books.txt",
+    "approved": false,
+    "note": "scout target only \u2014 not a SKU, not DEFAULT_TOPIC"
+  },
   "environment": "development",
-  "written": "2026-08-14T23:23:22Z",
+  "written": "2026-08-14T23:51:00Z",
   "how_to_run": "cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green",
   "scout_notes": [
-    "scout: --fixtures (skipped public HTTP)",
-    "fixtures never count as sourced"
+    "scout input: etsy_small_shop_monthly_books (scout target only \u2014 not a SKU)",
+    "out of scope: prompt packs, PM/RE, Notion rental OS, Paper+Spark feature clone, manufacture this week",
+    "scout: --fixtures (skipped public HTTP and Tavily)",
+    "fixtures never count as sourced",
+    "packet: NOT APPROVED, empty \u2014 no sourced rows, nothing drafted",
+    "NOT APPROVED: nothing published, listed, or posted"
   ],
   "signal_counts": {
     "live": 0,
@@ -16,11 +39,20 @@
     "total": 4
   },
   "fixtures_count_as_sourced": false,
+  "packet": {
+    "approval": "NOT APPROVED",
+    "approved": false,
+    "published": false,
+    "drafted": false,
+    "drafts": "packet/etsy_small_shop_monthly_books"
+  },
   "promise": {
-    "text": "For property managers: stop rewriting listing copy from scratch with one prompt pack.",
-    "description": "One prompt pack so property managers can handle rewriting listing copy from scratch, manual copy-paste wasting hours.",
-    "audience": "property managers",
-    "product_type": "prompt_pack"
+    "drafted": false,
+    "approved": false,
+    "text": "",
+    "description": "",
+    "audience": "",
+    "product_type": ""
   },
   "score": {
     "total": 0,

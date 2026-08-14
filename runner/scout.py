@@ -1,4 +1,4 @@
-"""Read-only scout: public HTTP, then fixtures. Fixtures never count as sourced."""
+"""Read-only scout: optional Tavily, public HTTP, then fixtures. Fixtures are never sourced."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def environment_name() -> str:
 
 
 def live_keys_present() -> bool:
-    """True if a live-auth key is set. Public HTTP does not require these."""
+    """True if a live-auth key is set. Public HTTP and Tavily do not require these."""
     return bool(
         os.environ.get("XAI_API_KEY")
         or os.environ.get("REDDIT_CLIENT_ID")
@@ -34,16 +34,28 @@ def scout(topic: str = DEFAULT_TOPIC, use_fixtures: bool = False) -> ScoutOutcom
     """
     One-shot read-only scout.
 
-    Keys missing: try public/unauth HTTP, then fixtures, still miss.
-    Fixture rows are marked fixture=True and never count as sourced.
-    Live rows (if any) are returned alone — fixtures are not mixed in.
+    Order: Tavily Reddit (optional key, process env then Hermes `.env`), the
+    public Reddit search JSON (403 is expected and not retried), then Gumroad
+    discover plus product pages. Zero live rows falls back to fixtures and still
+    misses. Fixture rows are marked fixture=True and never count as sourced.
+    Live rows are returned alone — fixtures are not mixed in.
     """
     _ = live_keys_present()
     if use_fixtures:
         return ScoutOutcome(
             signals=fixture_signals(topic),
             notes=[
-                "scout: --fixtures (skipped public HTTP)",
+                "scout: --fixtures (skipped public HTTP and Tavily)",
+                "fixtures never count as sourced",
+            ],
+            used_fixtures=True,
+        )
+
+    if not topic.strip():
+        return ScoutOutcome(
+            signals=fixture_signals(topic),
+            notes=[
+                "scout: no topic to search → skipped HTTP and Tavily",
                 "fixtures never count as sourced",
             ],
             used_fixtures=True,
@@ -51,11 +63,11 @@ def scout(topic: str = DEFAULT_TOPIC, use_fixtures: bool = False) -> ScoutOutcom
 
     live, notes = live_signals(topic)
     if live:
-        notes.append("scout: live public HTTP (fixtures not mixed in)")
+        notes.append("scout: live read-only rows (fixtures not mixed in)")
         notes.append("fixtures never count as sourced")
         return ScoutOutcome(signals=live, notes=notes, used_fixtures=False)
 
-    notes.append("scout: public HTTP empty/failed → fixtures")
+    notes.append("scout: live rows empty/failed → fixtures")
     notes.append("fixtures never count as sourced")
     return ScoutOutcome(
         signals=fixture_signals(topic),

@@ -60,9 +60,75 @@ PAIN_INTENT_PATTERNS = (
 )
 
 
+BUYING_PHRASES = (
+    "looking for",
+    "would pay",
+    "willing to pay",
+    "need help",
+    "need a prompt",
+)
+
+
 def has_pain_intent(text: str) -> bool:
     lowered = text.lower()
     return any(re.search(pattern, lowered) for pattern in PAIN_INTENT_PATTERNS)
+
+
+def _pain_from_text(text: str) -> tuple[str, ...]:
+    """Pain read out of observed text only. Neutral text yields nothing."""
+    if not has_pain_intent(text):
+        return ()
+    snippet = " ".join(text.split())
+    return (snippet[:160],) if len(snippet) >= 8 else ()
+
+
+def _buying_from_text(text: str) -> tuple[str, ...]:
+    lowered = text.lower()
+    found: list[str] = []
+    for phrase in BUYING_PHRASES:
+        if phrase in lowered:
+            found.append(phrase)
+    return tuple(found)
+
+
+def pain_sentences(text: str, limit: int = 3) -> tuple[str, ...]:
+    """
+    Whole sentences that carry pain/intent language, in the order they appear.
+
+    Quoting a sentence keeps the receipt readable and keeps gate 4 checking words
+    the page actually put next to each other.
+    """
+    flat = " ".join(text.split())
+    parts = re.split(r"(?<=[.!?])\s+|\s*[•|]\s*", flat)
+    found: list[str] = []
+    for part in parts:
+        candidate = part.strip()
+        if len(candidate) < 12 or not has_pain_intent(candidate):
+            continue
+        found.append(candidate[:240])
+        if len(found) >= limit:
+            break
+    return tuple(found)
+
+
+def pain_window(text: str, width: int = 240) -> str:
+    """
+    The earliest window of `text` around a pain/intent match.
+
+    Returns "" when the text has no pain language, so callers can quote what
+    the page actually said instead of inventing pain from page furniture.
+    """
+    flat = " ".join(text.split())
+    lowered = flat.lower()
+    earliest: int | None = None
+    for pattern in PAIN_INTENT_PATTERNS:
+        match = re.search(pattern, lowered)
+        if match and (earliest is None or match.start() < earliest):
+            earliest = match.start()
+    if earliest is None:
+        return ""
+    start = max(0, earliest - width // 3)
+    return flat[start : start + width].strip()
 
 
 def is_hype_only(text: str) -> bool:

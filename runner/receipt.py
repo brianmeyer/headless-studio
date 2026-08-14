@@ -19,6 +19,15 @@ HOW_TO_RUN = (
     "cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green"
 )
 
+# Every packet this runner writes is a draft. Approval is a human step and is
+# never automated, so this string is a constant, hit or miss.
+PACKET_APPROVAL = "NOT APPROVED"
+PACKET_DIR = "packet/etsy_small_shop_monthly_books"
+NO_DRAFT_LINE = (
+    f"{PACKET_APPROVAL} — nothing drafted. No sourced rows, so there is no promise. "
+    "A topic comes from a live scout, not from a hardcoded product."
+)
+
 
 def _signal_counts(result: RunResult) -> dict[str, int]:
     live = sum(1 for s in result.signals if not s.fixture)
@@ -26,20 +35,47 @@ def _signal_counts(result: RunResult) -> dict[str, int]:
     return {"live": live, "fixtures": fixtures, "total": len(result.signals)}
 
 
+def _scout_input_payload(result: RunResult) -> dict:
+    spec = result.scout_input
+    return {
+        "topic": spec.topic if spec else result.topic,
+        "query": result.query,
+        "hint": spec.hint if spec else "",
+        "out_of_scope": list(spec.out_of_scope) if spec else [],
+        "file": spec.path if spec else "",
+        "approved": False,
+        "note": "scout target only — not a SKU, not DEFAULT_TOPIC",
+    }
+
+
 def receipt_payload(result: RunResult) -> dict:
     counts = _signal_counts(result)
     return {
         "verdict": result.verdict,
         "paper_win": result.verdict == "hit",
+        "approved": False,
+        "approval": PACKET_APPROVAL,
+        "published": False,
         "ping": False,
         "topic": result.topic,
+        "query": result.query,
+        "scout_input": _scout_input_payload(result),
         "environment": result.environment,
         "written": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "how_to_run": HOW_TO_RUN,
         "scout_notes": list(result.notes),
         "signal_counts": counts,
         "fixtures_count_as_sourced": False,
+        "packet": {
+            "approval": PACKET_APPROVAL,
+            "approved": False,
+            "published": False,
+            "drafted": result.drafted,
+            "drafts": PACKET_DIR,
+        },
         "promise": {
+            "drafted": result.drafted,
+            "approved": False,
             "text": result.promise.title,
             "description": result.promise.description,
             "audience": result.promise.audience,
@@ -79,16 +115,48 @@ def render_receipt(result: RunResult) -> str:
     red = "\n".join(f"- {item}" for item in STILL_RED)
     notes = "\n".join(f"- {note}" for note in result.notes) or "- (none)"
 
+    spec = _scout_input_payload(result)
+    scope = ", ".join(spec["out_of_scope"]) or "(none recorded)"
+    scout_input = "\n".join(
+        [
+            f"- **topic:** {spec['topic'] or '(none)'} — {spec['note']}",
+            f"- **query:** {spec['query'] or '(none)'}",
+            f"- **direction:** {spec['hint'] or '(none)'}",
+            f"- **out of scope:** {scope}",
+        ]
+    )
+
+    if result.drafted:
+        stamp = (
+            f"{PACKET_APPROVAL} — draft only, not a SKU. "
+            "Nothing was published, listed, posted, or sold."
+        )
+        packet = "\n".join(
+            [
+                stamp,
+                "",
+                result.promise.title,
+                "",
+                result.promise.description,
+                "",
+                f"- **audience:** {result.promise.audience}",
+                f"- **type:** {result.promise.product_type}",
+                f"- **drafts:** `{PACKET_DIR}` ({PACKET_APPROVAL})",
+            ]
+        )
+    else:
+        packet = NO_DRAFT_LINE
+
     if result.verdict == "miss":
         headline = "miss"
         summary = (
-            "Paper-win miss. Scouted one buyer-facing promise and stopped. "
-            "No ping. Silence unless all four gates pass. No mock on miss."
+            "Paper-win miss. Scouted, scored, and stopped. No ping. "
+            "Silence unless all four gates pass. No mock on miss."
         )
     else:
         headline = "hit"
         summary = (
-            "Paper-win hit. One buyer-facing promise recorded. "
+            "Paper-win hit. One draft promise recorded. "
             "No ping. Nothing was posted, listed, or sold."
         )
 
@@ -100,6 +168,8 @@ def render_receipt(result: RunResult) -> str:
 
 - **verdict:** {result.verdict}
 - **paper_win:** {str(payload["paper_win"]).lower()}
+- **packet:** {PACKET_APPROVAL}
+- **published:** no
 - **ping:** no
 - **topic:** {result.topic}
 - **environment:** {result.environment}
@@ -108,18 +178,17 @@ def render_receipt(result: RunResult) -> str:
 - **live signals:** {counts["live"]}
 - **fixture signals:** {counts["fixtures"]} (never sourced)
 
+## Scout input
+
+{scout_input}
+
 ## Scout
 
 {notes}
 
-## Buyer-facing promise (draft only)
+## Packet draft ({PACKET_APPROVAL})
 
-{result.promise.title}
-
-{result.promise.description}
-
-- **audience:** {result.promise.audience}
-- **type:** {result.promise.product_type}
+{packet}
 
 ## Gates
 

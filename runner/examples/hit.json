@@ -1,13 +1,29 @@
 {
   "verdict": "hit",
   "paper_win": true,
+  "approved": false,
+  "approval": "NOT APPROVED",
+  "published": false,
   "ping": false,
   "topic": "chatgpt prompts for property managers",
+  "query": "chatgpt prompts for property managers",
+  "scout_input": {
+    "topic": "chatgpt prompts for property managers",
+    "query": "chatgpt prompts for property managers",
+    "hint": "",
+    "out_of_scope": [],
+    "file": "--topic override",
+    "approved": false,
+    "note": "scout target only \u2014 not a SKU, not DEFAULT_TOPIC"
+  },
   "environment": "development",
-  "written": "2026-08-14T23:23:35Z",
+  "written": "2026-08-14T23:51:00Z",
   "how_to_run": "cd /Users/brianmeyer/headless-studio && ENVIRONMENT=development python3 -m green",
   "scout_notes": [
-    "scout skipped: signals provided"
+    "scout input: chatgpt prompts for property managers (scout target only \u2014 not a SKU)",
+    "scout skipped: signals provided",
+    "packet: NOT APPROVED draft from 8 sourced rows",
+    "NOT APPROVED: nothing published, listed, or posted"
   ],
   "signal_counts": {
     "live": 8,
@@ -15,7 +31,16 @@
     "total": 8
   },
   "fixtures_count_as_sourced": false,
+  "packet": {
+    "approval": "NOT APPROVED",
+    "approved": false,
+    "published": false,
+    "drafted": true,
+    "drafts": "packet/etsy_small_shop_monthly_books"
+  },
   "promise": {
+    "drafted": true,
+    "approved": false,
     "text": "For property managers: stop wasting hours rewriting listing descriptions with one prompt pack.",
     "description": "One prompt pack so property managers can handle wasting hours rewriting listing descriptions, tenant notices inconsistent, starting from scratch.",
     "audience": "property managers",

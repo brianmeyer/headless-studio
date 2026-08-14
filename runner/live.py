@@ -1,25 +1,37 @@
-"""Public/unauth HTTP scouts. No secrets. Failures become empty lists."""
+"""
+Public/unauth HTTP scouts plus optional Tavily. No required secrets.
+
+Failures become empty lists and a note. Public Reddit answers 403 without auth;
+that is recorded once and not retried, because Tavily is the Reddit path that
+can work.
+"""
 
 from __future__ import annotations
 
 import json
 import re
+from dataclasses import replace
 from html import unescape
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from runner.clues import has_pain_intent
+from runner.clues import (
+    _buying_from_text,
+    _pain_from_text,
+    has_pain_intent,
+    pain_sentences,
+    pain_window,
+)
 from runner.models import Signal
+from runner.tavily import fetch_tavily_reddit
 
 USER_AGENT = "HeadlessStudio/1.0 (read-only research)"
 TIMEOUT_SEC = 12.0
 REDDIT_SEARCH = "https://www.reddit.com/search.json?q={q}&limit=25&sort=new&raw_json=1"
-REDDIT_PROPERTY = (
-    "https://www.reddit.com/r/PropertyManagement/search.json"
-    "?q={q}&restrict_sr=1&limit=25&sort=new&raw_json=1"
-)
 GUMROAD_DISCOVER = "https://gumroad.com/discover?query={q}"
+GUMROAD_PAGE_CAP = 8
+PAGE_SNIPPET_CHARS = 400
 
 
 def http_get(url: str, timeout: float = TIMEOUT_SEC) -> tuple[int, str]:
@@ -53,22 +65,6 @@ def _reddit_url(data: dict) -> str:
     if raw.startswith("http://") or raw.startswith("https://"):
         return raw
     return ""
-
-
-def _pain_from_text(text: str) -> tuple[str, ...]:
-    if not has_pain_intent(text):
-        return ()
-    snippet = " ".join(text.split())
-    return (snippet[:160],) if len(snippet) >= 8 else ()
-
-
-def _buying_from_text(text: str) -> tuple[str, ...]:
-    lowered = text.lower()
-    found: list[str] = []
-    for phrase in ("looking for", "would pay", "willing to pay", "need help", "need a prompt"):
-        if phrase in lowered:
-            found.append(phrase)
-    return tuple(found)
 
 
 def parse_reddit_listing(body: str) -> list[Signal]:
@@ -113,23 +109,30 @@ def parse_reddit_listing(body: str) -> list[Signal]:
 
 
 def fetch_reddit(topic: str) -> tuple[list[Signal], list[str]]:
+    """
+    Optional extra hop: the public Reddit search JSON.
+
+    Unauthenticated Reddit usually answers 403. That status is recorded and the
+    scout moves on — no extra headers, no old.reddit, no oauth, no retries.
+    """
     notes: list[str] = []
     signals: list[Signal] = []
     seen: set[str] = set()
-    urls = [REDDIT_SEARCH.format(q=quote(topic))]
-    lowered = topic.lower()
-    if any(word in lowered for word in ("property", "tenant", "listing", "landlord")):
-        urls.append(REDDIT_PROPERTY.format(q=quote(topic)))
-    for url in urls:
-        status, body = http_get(url)
-        notes.append(f"reddit GET {url} → {status}")
-        if status != 200:
+    if not topic.strip():
+        return signals, ["reddit: no topic to search → skipped"]
+    url = REDDIT_SEARCH.format(q=quote(topic))
+    status, body = http_get(url)
+    notes.append(f"reddit GET {url} → {status}")
+    if status in (403, 429):
+        notes.append("reddit: blocked without auth, expected → not retried (Tavily is the path)")
+        return signals, notes
+    if status != 200:
+        return signals, notes
+    for signal in parse_reddit_listing(body):
+        if signal.url in seen:
             continue
-        for signal in parse_reddit_listing(body):
-            if signal.url in seen:
-                continue
-            seen.add(signal.url)
-            signals.append(signal)
+        seen.add(signal.url)
+        signals.append(signal)
     return signals, notes
 
 
@@ -215,7 +218,113 @@ def parse_gumroad_discover(html: str) -> list[Signal]:
     return signals
 
 
+_SCRIPT_RE = re.compile(r"<(script|style)\b[^>]*>.*?</\1>", re.S | re.I)
+_TAG_RE = re.compile(r"<[^>]+>")
+_META_DESC_RE = re.compile(
+    r'<meta[^>]+(?:name|property)=["\'](?:description|og:description)["\'][^>]*'
+    r"content=([\"'])(.{8,}?)\1",
+    re.I | re.S,
+)
+_JSON_DESC_RE = re.compile(
+    r'"(?:description|full_description|custom_summary)"\s*:\s*"((?:[^"\\]|\\.){8,}?)"'
+)
+_FAQ_RE = re.compile(r"\bfaqs?\b|\bq\s*:|\ba\s*:", re.I)
+
+
+def _json_string(raw: str) -> str:
+    try:
+        return json.loads(f'"{raw}"')
+    except json.JSONDecodeError:
+        return raw
+
+
+def gumroad_page_text(html: str) -> str:
+    """
+    Readable text from a product page: meta/embedded description plus visible body.
+
+    No JS is executed and nothing is logged in. Whatever the page actually shows
+    is all this returns.
+    """
+    unesc = unescape(html)
+    parts: list[str] = [match.group(2) for match in _META_DESC_RE.finditer(unesc)]
+    json_ish = unesc.replace("&quot;", '"')
+    parts.extend(_json_string(match.group(1)) for match in _JSON_DESC_RE.finditer(json_ish))
+    body = _TAG_RE.sub(" ", _SCRIPT_RE.sub(" ", unesc))
+    parts.append(body)
+    flat = " ".join(" ".join(part.split()) for part in parts if part and part.strip())
+    return flat[:4000]
+
+
+def _seller_faq(sentence: str) -> bool:
+    """A seller answering their own FAQ is marketing copy, not a buyer in pain."""
+    return bool(_FAQ_RE.search(sentence))
+
+
+def _page_pain(page_text: str) -> str:
+    """The first pain sentence on the page that is not the seller's own FAQ."""
+    for sentence in pain_sentences(page_text, limit=6):
+        if not _seller_faq(sentence):
+            return sentence
+    return ""
+
+
+def _with_page_text(signal: Signal, page_text: str) -> Signal:
+    """Fold page text into the row. Pain is attached only if the page says it."""
+    window = _page_pain(page_text)
+    if not window:
+        # Run-on pages have no sentence to quote; fall back to a window.
+        fallback = pain_window(page_text)
+        window = "" if _seller_faq(fallback) else fallback
+    snippet = window or " ".join(page_text.split())[:PAGE_SNIPPET_CHARS]
+    if not snippet:
+        return signal
+    text = f"{signal.text}\n{snippet}"[:800]
+    if not window:
+        # Product titles and marketing furniture are not buyer pain.
+        return replace(signal, text=text)
+    return replace(
+        signal,
+        text=text,
+        pain_points=_pain_from_text(window),
+        buying_signals=_buying_from_text(page_text),
+        relevance=max(signal.relevance, 0.7),
+    )
+
+
+def fetch_gumroad_pages(
+    signals: list[Signal],
+    cap: int = GUMROAD_PAGE_CAP,
+) -> tuple[list[Signal], list[str]]:
+    """
+    GET each discovered product page (capped) and read pain/intent off the page.
+
+    A failed page GET keeps the discover row as sourced competition with no
+    invented pain, and records the status.
+    """
+    notes: list[str] = []
+    out: list[Signal] = []
+    for index, signal in enumerate(signals):
+        if index >= cap:
+            out.append(signal)
+            continue
+        status, body = http_get(signal.url)
+        notes.append(f"gumroad page GET {signal.url} → {status}")
+        if status != 200:
+            notes.append("gumroad page unreadable → kept as competition, no invented pain")
+            out.append(signal)
+            continue
+        out.append(_with_page_text(signal, gumroad_page_text(body)))
+    if len(signals) > cap:
+        notes.append(f"gumroad pages capped at {cap} of {len(signals)}")
+    with_pain = sum(1 for s in out if s.pain_points)
+    if out:
+        notes.append(f"gumroad pages with pain language: {with_pain} of {min(len(out), cap)}")
+    return out, notes
+
+
 def fetch_gumroad(topic: str) -> tuple[list[Signal], list[str]]:
+    if not topic.strip():
+        return [], ["gumroad: no topic to search → skipped"]
     url = GUMROAD_DISCOVER.format(q=quote(topic))
     status, body = http_get(url)
     notes = [f"gumroad GET {url} → {status}"]
@@ -223,15 +332,23 @@ def fetch_gumroad(topic: str) -> tuple[list[Signal], list[str]]:
         return [], notes
     signals = parse_gumroad_discover(body)
     notes.append(f"gumroad parsed {len(signals)} products")
-    return signals, notes
+    if not signals:
+        return signals, notes
+    enriched, page_notes = fetch_gumroad_pages(signals)
+    notes.extend(page_notes)
+    return enriched, notes
 
 
 def live_signals(topic: str) -> tuple[list[Signal], list[str]]:
-    """Try public Reddit, then public Gumroad. No secrets."""
-    notes: list[str] = ["scout: public-try (no required secrets)"]
+    """
+    Tavily Reddit (optional key) → public Reddit JSON → Gumroad discover + pages.
+
+    No required secrets. Fixtures are never mixed in here.
+    """
+    notes: list[str] = ["scout: read-only try (Tavily optional, no required secrets)"]
     collected: list[Signal] = []
     seen: set[str] = set()
-    for fetcher in (fetch_reddit, fetch_gumroad):
+    for fetcher in (fetch_tavily_reddit, fetch_reddit, fetch_gumroad):
         try:
             rows, extra = fetcher(topic)
         except Exception as exc:

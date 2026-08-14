@@ -1,0 +1,37 @@
+Monthly P&L,DRAFT — NOT APPROVED,
+Month starts on,2026-01-01,Type the first day of the month
+Month ends on,"=EOMONTH($B$2,0)",Fills itself in
+,,
+Money in,,
+Gross sales,"=SUMIFS('Sales & fees'!$D:$D,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)",From Sales & fees
+Discounts,"=SUMIFS('Sales & fees'!$E:$E,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)",From Sales & fees
+Refunds,"=SUMIFS('Sales & fees'!$K:$K,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)",From Sales & fees
+Net revenue,=B6-B7-B8,Gross sales less discounts and refunds
+Shipping charged to buyers,"=SUMIFS('Sales & fees'!$F:$F,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)",Counted as income
+Sales tax collected,"=SUMIFS('Sales & fees'!$G:$G,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)","Pass-through — held for the state, not profit"
+,,
+Selling fees,,
+Marketplace fees,"=SUMIFS('Sales & fees'!$H:$H,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)",From Sales & fees
+Payment processing fees,"=SUMIFS('Sales & fees'!$I:$I,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)",From Sales & fees
+Ads fees (on platform),"=SUMIFS('Sales & fees'!$J:$J,'Sales & fees'!$A:$A,"">=""&$B$2,'Sales & fees'!$A:$A,""<=""&$B$3)",From Sales & fees
+Total selling fees,=SUM(B14:B16),
+,,
+Expenses,,Category spelling must match the Expenses tab
+Materials & supplies,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A20)",From Expenses
+Packaging & shipping supplies,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A21)",From Expenses
+Postage & labels,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A22)",From Expenses
+Software & subscriptions,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A23)",From Expenses
+Advertising off Etsy,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A24)",From Expenses
+Home office & utilities share,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A25)",From Expenses
+Mileage & travel,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A26)",From Expenses
+Professional services,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A27)",From Expenses
+Bank & payment fees,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A28)",From Expenses
+Other,"=SUMIFS(Expenses!$E:$E,Expenses!$A:$A,"">=""&$B$2,Expenses!$A:$A,""<=""&$B$3,Expenses!$C:$C,$A29)",From Expenses
+Total expenses,=SUM(B20:B29),
+,,
+Profit before tax,=B9+B10-B17-B30,"Net revenue plus shipping, less fees and expenses"
+Set-aside rate,0.25,"Your own guess, not tax advice"
+Money to set aside,"=IF(B32>0,B32*B33,0)",Estimate only
+Left after set-aside,=B32-B34,
+,,
+Not tax advice,,Bookkeeping worksheet only. Not designed or reviewed by a CPA.
