@@ -52,7 +52,7 @@ jobs:
         run: grep -q miss receipts/latest.md
 
       - name: Runner tests
-        run: pytest runner/tests -v --tb=short
+        run: PYTHONPATH=. python -m pytest runner/tests -v --tb=short
 
   lint:
     runs-on: ubuntu-latest

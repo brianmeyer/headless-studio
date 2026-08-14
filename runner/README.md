@@ -36,7 +36,7 @@ A hit writes the receipt plus a local static HTML mock under `receipts/mocks/`. 
 ## Tests
 
 ```bash
-pytest runner/tests -v
+PYTHONPATH=. python -m pytest runner/tests -v
 ```
 
 ## Example receipts
