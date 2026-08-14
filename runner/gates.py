@@ -32,9 +32,8 @@ def promise_matches_sources(
     if not signals:
         return False, "no sources to read"
 
+    # Gate 4 reads source text only — not attached pain_points metadata.
     corpus_text = " ".join(s.text for s in signals)
-    for signal in signals:
-        corpus_text += " " + " ".join(signal.pain_points)
     corpus = content_words(corpus_text)
 
     promise_text = " ".join(

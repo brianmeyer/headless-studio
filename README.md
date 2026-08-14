@@ -2,6 +2,21 @@
 
 Autonomous AI-powered digital product factory.
 
+## Green runner (Vera locked)
+
+One-shot scout → one buyer-facing promise → score → local markdown + JSON receipt → exit.
+
+```bash
+python -m green
+python -m green --fixtures
+ENVIRONMENT=development python -m runner
+```
+
+Same pipeline, two entries. Silence: writes `miss` unless all four paper-win gates pass. No secrets in development. See [docs/GREEN_RUNNER.md](docs/GREEN_RUNNER.md).
+
+Still Red (not this slice): first post, listing, dollar, buyer conversation.
+
+
 ## Quick Start
 
 ### 1. Clone and Setup

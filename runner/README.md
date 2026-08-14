@@ -9,6 +9,7 @@ Not a factory. No FastAPI, SQLite, post, listing, checkout, or ping.
 From the repo root, with no env keys:
 
 ```bash
+python -m green
 ENVIRONMENT=development python -m runner
 ```
 

@@ -67,3 +67,7 @@ receipts/latest.json
 receipts/run-*.md
 receipts/run-*.json
 receipts/mocks/
+
+# Green runner outputs (keep .gitkeep)
+green/out/*
+!green/out/.gitkeep
